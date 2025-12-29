@@ -1,0 +1,7 @@
+name = "notegrid"
+compatibility_date = "2025-02-04"
+pages_build_output_dir = "./dist"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "bbc7614ed6124dca84cca2c3e3d01a8d"
