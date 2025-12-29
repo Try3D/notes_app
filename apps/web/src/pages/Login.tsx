@@ -92,7 +92,7 @@ export default function Login() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1>Note Grid</h1>
+        <h1>NoteGrid</h1>
         <p className="login-subtitle">Your personal productivity companion</p>
 
         {view === "main" && (
