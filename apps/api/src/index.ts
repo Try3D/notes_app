@@ -156,7 +156,7 @@ app.post("/api/register", async (c) => {
 });
 
 app.get("/api/health", (c) => {
-  return c.json({ status: "ok", timestamp: Date.now() });
+  return c.json({ status: "ok", timestamp: Date.now(), version: "0.0.0" });
 });
 
 export default app;
