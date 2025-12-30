@@ -238,7 +238,11 @@ class HandDrawnTextField extends StatelessWidget {
       textInputAction: textInputAction,
       autofocus: autofocus,
       focusNode: focusNode,
-      style: Theme.of(context).textTheme.bodyLarge,
+      scrollPhysics: const BouncingScrollPhysics(),
+      style: const TextStyle(
+        fontFamily: 'ShortStack',
+        fontSize: 16,
+      ),
       decoration: InputDecoration(
         hintText: hintText,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),

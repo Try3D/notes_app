@@ -9,7 +9,7 @@ export default function Layout() {
       <nav className="sidebar">
         <NavLink
           to="/"
-          className={({ isActive }) =>
+          className={({ isActive }: { isActive: boolean }) =>
             `sidebar-icon ${isActive ? "active" : ""}`
           }
           title="Todos"
@@ -29,7 +29,7 @@ export default function Layout() {
         </NavLink>
         <NavLink
           to="/matrix"
-          className={({ isActive }) =>
+          className={({ isActive }: { isActive: boolean }) =>
             `sidebar-icon ${isActive ? "active" : ""}`
           }
           title="Eisenhower Matrix"
@@ -50,7 +50,7 @@ export default function Layout() {
         </NavLink>
         <NavLink
           to="/links"
-          className={({ isActive }) =>
+          className={({ isActive }: { isActive: boolean }) =>
             `sidebar-icon ${isActive ? "active" : ""}`
           }
           title="Links"
@@ -70,7 +70,7 @@ export default function Layout() {
         <div className="sidebar-spacer"></div>
         <NavLink
           to="/settings"
-          className={({ isActive }) =>
+          className={({ isActive }: { isActive: boolean }) =>
             `sidebar-icon ${isActive ? "active" : ""}`
           }
           title="Settings"

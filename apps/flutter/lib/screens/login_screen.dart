@@ -252,12 +252,15 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              _generatedCode,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontFamily: 'monospace',
-                    color: context.textColor,
-                  ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Text(
+                _generatedCode,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontFamily: 'ShortStack',
+                      color: context.textColor,
+                    ),
+              ),
             ),
           ),
           IconButton(
