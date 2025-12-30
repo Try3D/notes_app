@@ -763,8 +763,9 @@ header h1 {
   gap: 12px;
   padding: 12px 16px;
   cursor: pointer;
-  transition: 0.15s;
   border-bottom: 1px solid var(--hover);
+  user-select: none;
+  position: relative;
 }
 
 .todo-item:last-child {
@@ -773,6 +774,52 @@ header h1 {
 
 .todo-item:hover {
   background: var(--hover);
+}
+
+.todo-item.dragging {
+  opacity: 0.4;
+}
+
+.todo-item.drag-over::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #3b82f6;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: -2px;
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+.todo-item:hover .drag-handle {
+  opacity: 0.7;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.todo-drop-end {
+  height: 8px;
+  position: relative;
+}
+
+.todo-drop-end.drag-over::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #3b82f6;
 }
 
 .todo-item input[type="checkbox"] {
@@ -796,21 +843,24 @@ header h1 {
   color: var(--text);
 }
 
-.todo-item.completed span {
+.todo-item.completed span:not(.drag-handle):not(.quadrant-badge) {
   text-decoration: line-through;
   color: var(--muted);
 }
 
-.todo-item span {
+.todo-item > span:not(.quadrant-badge):not(.drag-handle) {
   flex: 1;
 }
 
 .quadrant-badge {
-  font-size: 0.75em;
-  padding: 4px 8px;
+  font-size: 0.65em;
+  padding: 3px 6px;
   border-radius: 2px;
   background: var(--muted);
   color: white;
+  flex-shrink: 0;
+  white-space: nowrap;
+  width: fit-content;
 }
 
 .quadrant-badge.q-do {
@@ -840,7 +890,6 @@ header h1 {
   cursor: pointer;
   font-family: "Short Stack", cursive;
   font-size: 1em;
-  transition: 0.15s;
 }
 
 .add-todo-btn:hover {

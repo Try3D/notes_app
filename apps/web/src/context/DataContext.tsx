@@ -28,6 +28,7 @@ interface DataContextType {
   addTask: (task: Partial<Task>) => Task;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
+  reorderTasks: (taskIds: string[]) => void;
   addLink: (link: Omit<Link, "id" | "createdAt">) => void;
   deleteLink: (id: string) => void;
   importData: (jsonString: string) => ImportResult;
@@ -190,6 +191,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
     [updateData],
   );
 
+  const reorderTasks = useCallback(
+    (taskIds: string[]) => {
+      updateData((prev) => {
+        const taskMap = new Map(prev.tasks.map((t) => [t.id, t]));
+        const reorderedTasks = taskIds
+          .map((id) => taskMap.get(id))
+          .filter((t): t is Task => t !== undefined);
+        // Add any tasks that weren't in the taskIds array (shouldn't happen, but just in case)
+        const remainingTasks = prev.tasks.filter((t) => !taskIds.includes(t.id));
+        return { ...prev, tasks: [...reorderedTasks, ...remainingTasks] };
+      });
+    },
+    [updateData],
+  );
+
   const addLink = useCallback(
     (link: Omit<Link, "id" | "createdAt">) => {
       const newLink: Link = {
@@ -323,6 +339,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         addTask,
         updateTask,
         deleteTask,
+        reorderTasks,
         addLink,
         deleteLink,
         importData,

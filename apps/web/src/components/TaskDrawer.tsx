@@ -18,15 +18,22 @@ export default function TaskDrawer({ task, onClose, onUpdate, onDelete, showQuad
   const [quadrant, setQuadrant] = useState<string>('')
   const [color, setColor] = useState(COLORS[0])
   const titleRef = useRef<HTMLInputElement>(null)
+  const prevTaskIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (task) {
-      setTitle(task.title)
-      setNote(task.note)
-      setTags(task.tags.join(', '))
-      setQuadrant(task.q || '')
-      setColor(task.color)
-      setTimeout(() => titleRef.current?.focus(), 50)
+      // Only update form fields and focus when opening a different task
+      if (prevTaskIdRef.current !== task.id) {
+        setTitle(task.title)
+        setNote(task.note)
+        setTags(task.tags.join(', '))
+        setQuadrant(task.q || '')
+        setColor(task.color)
+        setTimeout(() => titleRef.current?.focus(), 50)
+        prevTaskIdRef.current = task.id
+      }
+    } else {
+      prevTaskIdRef.current = null
     }
   }, [task])
 
