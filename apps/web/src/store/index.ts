@@ -25,25 +25,20 @@ export const setUuidAtom = atom(null, (_get, set, uuid: string | null) => {
   set(uuidAtom, uuid);
 });
 
-// Data sync
-let syncTimeout: number | null = null;
-
+// Data sync - immediate, no debounce
 const saveToAPI = async (uuid: string, data: UserData) => {
-  if (syncTimeout) clearTimeout(syncTimeout);
-  syncTimeout = window.setTimeout(async () => {
-    try {
-      await fetch(`${API_URL}/api/data`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${uuid}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-    } catch (error) {
-      console.error("Failed to save data:", error);
-    }
-  }, 300);
+  try {
+    await fetch(`${API_URL}/api/data`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${uuid}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+  } catch (error) {
+    console.error("Failed to save data:", error);
+  }
 };
 
 const saveData = (uuid: string | null, data: UserData) => {

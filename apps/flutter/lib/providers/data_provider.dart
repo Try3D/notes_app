@@ -12,10 +12,9 @@ class DataProvider extends ChangeNotifier {
   String? _uuid;
   UserData? _data;
   bool _isLoading = true;
-  Timer? _syncTimer;
   Timer? _pollTimer;
   bool _isPollingActive = false;
-  static const _pollInterval = Duration(seconds: 60);
+  static const _pollInterval = Duration(seconds: 30); // 30 seconds
 
   DataProvider(this._storage);
 
@@ -42,10 +41,10 @@ class DataProvider extends ChangeNotifier {
     if (_isPollingActive || _uuid == null) return;
     _isPollingActive = true;
 
-    // Start periodic polling every 60 seconds
+    // Start periodic polling every 30 seconds
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(_pollInterval, (_) {
-      _fetchLatestData();
+      _forceSyncFromServer();
     });
   }
 
@@ -60,7 +59,7 @@ class DataProvider extends ChangeNotifier {
   void onAppResumed() {
     if (_uuid == null) return;
     startPolling();
-    _fetchLatestData();
+    _forceSyncFromServer();
   }
 
   /// Called when app goes to background
@@ -68,23 +67,18 @@ class DataProvider extends ChangeNotifier {
     stopPolling();
   }
 
-  /// Fetch latest data from API and update only if remote is newer
-  Future<void> _fetchLatestData() async {
+  /// Force sync from server - server is source of truth, always overwrites local
+  Future<void> _forceSyncFromServer() async {
     if (_uuid == null) return;
 
     final api = ApiService(uuid: _uuid);
     final apiData = await api.fetchData();
 
     if (apiData != null) {
-      // Only update if remote data is newer than local data
-      final localUpdatedAt = _data?.updatedAt ?? 0;
-      final remoteUpdatedAt = apiData.updatedAt;
-
-      if (remoteUpdatedAt > localUpdatedAt) {
-        _data = apiData;
-        await _storage.setCachedData(apiData);
-        notifyListeners();
-      }
+      // Server is source of truth - always overwrite local data
+      _data = apiData;
+      await _storage.setCachedData(apiData);
+      notifyListeners();
     }
   }
 
@@ -92,22 +86,21 @@ class DataProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    // Try to load from cache first
-    final cached = _storage.getCachedData();
-    if (cached != null) {
-      _data = cached;
-      notifyListeners();
-    }
-
-    // Fetch from API
+    // Server is source of truth - fetch from API first
     if (_uuid != null) {
       final api = ApiService(uuid: _uuid);
       final apiData = await api.fetchData();
       if (apiData != null) {
         _data = apiData;
         await _storage.setCachedData(apiData);
-      } else if (_data == null) {
-        _data = UserData.empty();
+      } else {
+        // Only use cache if server is unreachable
+        final cached = _storage.getCachedData();
+        if (cached != null) {
+          _data = cached;
+        } else {
+          _data = UserData.empty();
+        }
       }
     }
 
@@ -119,13 +112,7 @@ class DataProvider extends ChangeNotifier {
     await _loadData();
   }
 
-  void _scheduleSync() {
-    _syncTimer?.cancel();
-    _syncTimer = Timer(const Duration(milliseconds: 300), () {
-      _syncToAPI();
-    });
-  }
-
+  // Immediate sync to API - no debounce
   Future<void> _syncToAPI() async {
     if (_uuid == null || _data == null) return;
 
@@ -161,7 +148,7 @@ class DataProvider extends ChangeNotifier {
     _data ??= UserData.empty();
     _data!.tasks.add(task);
     notifyListeners();
-    _scheduleSync();
+    _syncToAPI();
     return task;
   }
 
@@ -193,14 +180,14 @@ class DataProvider extends ChangeNotifier {
     );
 
     notifyListeners();
-    _scheduleSync();
+    _syncToAPI();
   }
 
   void deleteTask(String id) {
     if (_data == null) return;
     _data!.tasks.removeWhere((t) => t.id == id);
     notifyListeners();
-    _scheduleSync();
+    _syncToAPI();
   }
 
   void reorderTasks(List<String> taskIds) {
@@ -221,7 +208,7 @@ class DataProvider extends ChangeNotifier {
     _data!.tasks = reordered;
 
     notifyListeners();
-    _scheduleSync();
+    _syncToAPI();
   }
 
   // Link operations
@@ -237,7 +224,7 @@ class DataProvider extends ChangeNotifier {
     _data ??= UserData.empty();
     _data!.links.add(link);
     notifyListeners();
-    _scheduleSync();
+    _syncToAPI();
     return link;
   }
 
@@ -245,7 +232,7 @@ class DataProvider extends ChangeNotifier {
     if (_data == null) return;
     _data!.links.removeWhere((l) => l.id == id);
     notifyListeners();
-    _scheduleSync();
+    _syncToAPI();
   }
 
   void reorderLinks(List<String> linkIds) {
@@ -266,7 +253,7 @@ class DataProvider extends ChangeNotifier {
     _data!.links = reordered;
 
     notifyListeners();
-    _scheduleSync();
+    _syncToAPI();
   }
 
   // Import/Export
@@ -289,7 +276,7 @@ class DataProvider extends ChangeNotifier {
       _data = importedData;
       _data!.updatedAt = DateTime.now().millisecondsSinceEpoch;
       notifyListeners();
-      _scheduleSync();
+      _syncToAPI();
 
       return ImportResult(
         success: true,
@@ -306,7 +293,6 @@ class DataProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    _syncTimer?.cancel();
     _pollTimer?.cancel();
     super.dispose();
   }
