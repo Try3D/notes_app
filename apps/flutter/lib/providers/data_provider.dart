@@ -130,6 +130,7 @@ class DataProvider extends ChangeNotifier {
     List<String>? tags,
     String color = '#ef4444',
     Quadrant? q,
+    KanbanColumn? kanban,
     bool completed = false,
   }) {
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -140,6 +141,7 @@ class DataProvider extends ChangeNotifier {
       tags: tags ?? [],
       color: color,
       q: q,
+      kanban: kanban,
       completed: completed,
       createdAt: now,
       updatedAt: now,
@@ -159,8 +161,10 @@ class DataProvider extends ChangeNotifier {
     List<String>? tags,
     String? color,
     Quadrant? q,
+    KanbanColumn? kanban,
     bool? completed,
     bool clearQuadrant = false,
+    bool clearKanban = false,
   }) {
     if (_data == null) return;
 
@@ -174,8 +178,10 @@ class DataProvider extends ChangeNotifier {
       tags: tags,
       color: color,
       q: q,
+      kanban: kanban,
       completed: completed,
       clearQuadrant: clearQuadrant,
+      clearKanban: clearKanban,
       updatedAt: DateTime.now().millisecondsSinceEpoch,
     );
 

@@ -1,5 +1,5 @@
-// API Configuration
-const API_URL = 'https://eisenhower-api.rsarans186.workers.dev';
+// API_BASE is loaded via importScripts in service worker
+importScripts('config.js');
 
 // Utility functions
 function generateUUID() {
@@ -31,14 +31,14 @@ async function getStoredUuid() {
 
 // API functions
 async function fetchUserData(uuid) {
-  const response = await fetch(`${API_URL}/api/data`, {
+  const response = await fetch(`${API_BASE}/api/data`, {
     headers: { 'Authorization': `Bearer ${uuid}` },
   });
   return response.json();
 }
 
 async function saveUserData(uuid, data) {
-  const response = await fetch(`${API_URL}/api/data`, {
+  const response = await fetch(`${API_BASE}/api/data`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',

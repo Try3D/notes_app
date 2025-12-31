@@ -43,10 +43,10 @@ class _LinksScreenState extends State<LinksScreen> {
       } catch (_) {}
 
       context.read<DataProvider>().addLink(
-            url: url,
-            title: title,
-            favicon: favicon,
-          );
+        url: url,
+        title: title,
+        favicon: favicon,
+      );
 
       _urlController.clear();
       setState(() {
@@ -64,18 +64,26 @@ class _LinksScreenState extends State<LinksScreen> {
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
-    if (await canLaunchUrl(uri)) {
+    try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      debugPrint('Could not launch $url: $e');
     }
   }
 
-  void _handleLinkDrop(Link draggedLink, {Link? targetLink, bool atEnd = false}) {
+  void _handleLinkDrop(
+    Link draggedLink, {
+    Link? targetLink,
+    bool atEnd = false,
+  }) {
     final data = context.read<DataProvider>();
     final links = data.links;
 
     if (targetLink != null && draggedLink.id != targetLink.id) {
       final filteredLinks = links.where((l) => l.id != draggedLink.id).toList();
-      final targetIndex = filteredLinks.indexWhere((l) => l.id == targetLink.id);
+      final targetIndex = filteredLinks.indexWhere(
+        (l) => l.id == targetLink.id,
+      );
 
       if (targetIndex != -1) {
         filteredLinks.insert(targetIndex, draggedLink);
@@ -120,8 +128,8 @@ class _LinksScreenState extends State<LinksScreen> {
                       child: Text(
                         'No links yet. Add one to get started!',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: context.mutedColor,
-                            ),
+                          color: context.mutedColor,
+                        ),
                       ),
                     )
                   : ListView.builder(
@@ -193,7 +201,8 @@ class _LinksScreenState extends State<LinksScreen> {
                           link.favicon,
                           width: 28,
                           height: 28,
-                          errorBuilder: (_, __, ___) => const Icon(Icons.link, size: 28),
+                          errorBuilder: (_, __, ___) =>
+                              const Icon(Icons.link, size: 28),
                         ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -203,9 +212,8 @@ class _LinksScreenState extends State<LinksScreen> {
                           children: [
                             Text(
                               link.title,
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w600),
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
@@ -240,46 +248,55 @@ class _LinksScreenState extends State<LinksScreen> {
         borderRadius: BorderRadius.circular(2),
         border: Border.all(color: context.borderColor, width: 2),
       ),
-      child: InkWell(
-        onTap: () => _launchUrl(link.url),
-        borderRadius: BorderRadius.circular(2),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              const DragHandle(),
-              const SizedBox(width: 14),
-              if (link.favicon.isNotEmpty)
-                Image.network(
-                  link.favicon,
-                  width: 28,
-                  height: 28,
-                  errorBuilder: (_, __, ___) => Icon(Icons.link, size: 28, color: context.mutedColor),
-                ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            const DragHandle(),
+            const SizedBox(width: 14),
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _launchUrl(link.url),
+                child: Row(
                   children: [
-                    Text(
-                      link.title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
+                    if (link.favicon.isNotEmpty)
+                      Image.network(
+                        link.favicon,
+                        width: 28,
+                        height: 28,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.link,
+                          size: 28,
+                          color: context.mutedColor,
+                        ),
+                      ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            link.title,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      link.url,
-                      style: Theme.of(context).textTheme.bodySmall,
-                      overflow: TextOverflow.ellipsis,
+                          const SizedBox(height: 4),
+                          Text(
+                            link.url,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              _buildDeleteButton(link.id),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            _buildDeleteButton(link.id),
+          ],
         ),
       ),
     );

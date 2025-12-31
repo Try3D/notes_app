@@ -93,11 +93,21 @@
 
     <!-- Settings View -->
     <div id="settingsView" class="view hidden">
-      <h2 class="section-title">Settings</h2>
+      <div class="settings-header">
+        <h2 class="section-title">Settings</h2>
+        <button id="backFromSettings" class="icon-btn" title="Back">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
+      </div>
+      <div class="settings-divider"></div>
 
       <!-- UUID section -->
       <div class="settings-section">
-        <label class="settings-label">Your Secret Code</label>
+        <h3 class="settings-label">Your Secret Code</h3>
+        <p class="settings-description">This is your unique identifier. Keep it safe - it's the only way to access your data.</p>
         <div class="uuid-display">
           <code id="currentUuid" class="uuid-hidden"></code>
           <div class="uuid-actions">
@@ -120,7 +130,43 @@
           </div>
         </div>
       </div>
-      <button id="logoutBtn" class="btn danger">Logout</button>
+
+      <!-- Theme section -->
+      <div class="settings-section">
+        <h3 class="settings-label">Theme</h3>
+        <p class="settings-description">Switch between light and dark mode.</p>
+        <button id="themeToggleBtn" class="settings-btn">
+          <svg id="themeBtnSunIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg id="themeBtnMoonIcon" class="hidden" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <span id="themeToggleText">Switch to Dark Mode</span>
+        </button>
+      </div>
+
+      <!-- Logout section -->
+      <div class="settings-section">
+        <h3 class="settings-label">Logout</h3>
+        <p class="settings-description">Sign out of your account. Your data will remain saved.</p>
+        <button id="logoutBtn" class="settings-btn">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          Logout
+        </button>
+      </div>
     </div>
 
     <!-- Loading overlay -->
@@ -129,6 +175,7 @@
     </div>
   </div>
 
+  <script src="config.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

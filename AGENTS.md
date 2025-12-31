@@ -6,17 +6,22 @@
 ## Project Overview
 A full-stack productivity app with:
 - **Eisenhower Matrix** task manager (4-quadrant: Do, Schedule, Delegate, Eliminate)
+- **Kanban Board** (columns: Unassigned, Backlog, To Do, In Progress, Done)
 - **Todo Manager** (tasks grouped by color)
 - **Links/Bookmarks** manager
 - **Settings** page (UUID display, export data, delete account)
 
 ## Tech Stack
 - **Monorepo**: Turborepo
-- **Frontend**: React + React Router + Vite (`apps/web`)
-- **Backend**: Hono on Cloudflare Workers (`apps/api`)
-- **Storage**: Cloudflare KV (namespace ID: `bbc7614ed6124dca84cca2c3e3d01a8d`)
+- **Frontend**: React + Vite + Jotai (`apps/web`)
+- **Mobile**: Flutter (`apps/flutter`)
+- **Chrome Extension**: (`apps/chrome-extension`)
+- **Backend**: Hono on Cloudflare Workers (`apps/api`) - already deployed
+- **Storage**: Cloudflare KV
 - **Shared Types**: `packages/shared`
 - **Auth**: Loginless UUID system (user generates/enters a UUID as their identity)
+
+**API Base URL**: `https://eisenhower-api.rsarans186.workers.dev`
 
 ## Directory Structure
 ```
@@ -27,9 +32,10 @@ A full-stack productivity app with:
 │   │   │   ├── main.tsx        # App entry point
 │   │   │   ├── App.tsx         # Routes configuration
 │   │   │   ├── styles.css      # All styles
+│   │   │   ├── config.ts       # API base URL
+│   │   │   ├── store/
+│   │   │   │   └── index.ts    # Jotai atoms for state management
 │   │   │   ├── context/
-│   │   │   │   ├── AuthContext.tsx   # UUID-based auth state
-│   │   │   │   ├── DataContext.tsx   # Tasks/Links data + API sync
 │   │   │   │   └── ThemeContext.tsx  # Dark/light mode
 │   │   │   ├── components/
 │   │   │   │   ├── Layout.tsx        # Sidebar + main content wrapper
@@ -38,16 +44,32 @@ A full-stack productivity app with:
 │   │   │       ├── Login.tsx         # Generate/enter UUID
 │   │   │       ├── Todos.tsx         # Tasks grouped by color
 │   │   │       ├── Matrix.tsx        # Eisenhower 4-quadrant matrix
+│   │   │       ├── Kanban.tsx        # Kanban board view
 │   │   │       ├── Links.tsx         # Bookmarks manager
 │   │   │       └── Settings.tsx      # UUID, export, delete account
 │   │   ├── index.html
-│   │   ├── vite.config.ts      # Vite config with API proxy
+│   │   ├── vite.config.ts
 │   │   └── package.json
-│   └── api/                    # Hono Cloudflare Workers backend
-│       ├── src/
-│       │   └── index.ts        # API routes
-│       ├── wrangler.json       # Cloudflare Workers config
-│       └── package.json
+│   ├── api/                    # Hono Cloudflare Workers backend (deployed)
+│   │   ├── src/
+│   │   │   └── index.ts        # API routes
+│   │   ├── wrangler.json       # Cloudflare Workers config
+│   │   └── package.json
+│   ├── flutter/                # Flutter mobile app
+│   │   ├── lib/
+│   │   │   ├── main.dart
+│   │   │   ├── models/         # Task, Link, UserData
+│   │   │   ├── providers/      # Auth, Data, Theme providers
+│   │   │   ├── screens/        # All app screens (including kanban_screen.dart)
+│   │   │   ├── services/       # API & storage services
+│   │   │   ├── theme/          # App theming (AppColors, colorNames)
+│   │   │   └── widgets/        # Reusable widgets (hand_drawn_widgets, task_drawer)
+│   │   └── assets/             # Fonts, icons, splash
+│   └── chrome-extension/       # Browser extension for saving bookmarks
+│       ├── manifest.json
+│       ├── popup.html/js/css
+│       ├── background.js
+│       └── icons/              # Extension icons (16, 32, 48, 128px)
 ├── packages/
 │   └── shared/                 # Shared TypeScript types
 │       └── src/
@@ -75,8 +97,9 @@ interface Task {
   title: string;
   note: string;
   tags: string[];
-  color: string;
-  q: 'do' | 'decide' | 'delegate' | 'delete' | null;
+  color: string;                                      // hex color (e.g., "#ef4444")
+  q: 'do' | 'decide' | 'delegate' | 'delete' | null;  // Eisenhower quadrant
+  kanban: 'backlog' | 'todo' | 'in-progress' | 'done' | null;  // Kanban column
   completed: boolean;
   createdAt: number;
   updatedAt: number;
@@ -104,44 +127,47 @@ interface UserData {
 }
 ```
 
-## Commands
-```bash
-npm install          # Install all dependencies
-npm run dev          # Start both web (port 5173) and api (port 8787) dev servers
-npm run build        # Build all packages
-```
+## Known Hardcoded Values (candidates for centralization)
 
-## Current Status
+### API URL (duplicated in 4 places)
+- `apps/web/src/config.ts`
+- `apps/flutter/lib/services/api_service.dart`
+- `apps/chrome-extension/popup.js`
+- `apps/chrome-extension/background.js`
 
-### Completed
-- [x] Turborepo monorepo setup
-- [x] Vite + React frontend with React Router
-- [x] Hono API with Cloudflare KV integration
-- [x] Shared types package
-- [x] Auth context (UUID-based loginless auth)
-- [x] Data context (localStorage cache + API sync with debounce)
-- [x] Theme context (dark/light mode)
-- [x] Login page (generate new UUID / enter existing)
-- [x] Todos page (tasks grouped by color, with quadrant badges)
-- [x] Matrix page (Eisenhower 4-quadrant + unassigned column)
-- [x] Links page (add/delete bookmarks)
-- [x] Settings page (view UUID hidden/shown, export JSON, delete account)
-- [x] Sidebar navigation with all routes
-- [x] TaskDrawer component for editing tasks
+### Favicon Service URL
+`https://www.google.com/s2/favicons?domain=...&sz=64` - duplicated in web, flutter, and chrome extension
 
-### Known Issues
-- API server must be running on port 8787 for frontend to work (Vite proxies `/api` requests)
-- If port 8787 is occupied by another process, kill it first: `pkill -f workerd`
+### Labels (duplicated across files)
+- **Quadrant labels**: "Do", "Schedule", "Delegate", "Eliminate"
+- **Kanban columns**: "Unassigned", "Backlog", "To Do", "In Progress", "Done"
+- **Colors**: red, green, orange, blue, purple, pink, teal, yellow, gray, dark
 
-### TODO
-- [x] Test full app flow end-to-end
-- [x] Clean up old legacy files from root directory (index.html, matrix.html, links.html, *.js, old styles.css, *.svg)
-- [x] Move SVG assets to apps/web/public/
-- [ ] Deploy to Cloudflare (Pages for frontend, Workers for API)
+### Magic Numbers
+- Poll interval: 30 seconds (web store, flutter data_provider)
+- Copy feedback timeout: 2000ms
+- Edge scroll delays: 600ms initial, 400ms interval (flutter kanban)
+
+### Storage Keys
+| Platform | Keys |
+|----------|------|
+| Web | `uuid`, `eisenhower_data` |
+| Flutter | `eisenhower_uuid`, `eisenhower_data`, `eisenhower_theme` |
+| Chrome | `uuid`, `darkMode` |
 
 ## Design Notes
 - Uses 'Short Stack' Google Font for a handwritten/playful look
 - CSS variables for theming (light/dark mode)
-- Sidebar navigation on the left
+- Light: `--bg: #fdf7f1`, `--card: #ffffff`, `--border: #3c3c3c`, `--text: #3c3c3c`
+- Dark: `--bg: #1a1a1a`, `--card: #252525`, `--border: #e0e0e0`, `--text: #f0f0f0`
+- Sidebar navigation on the left (web), bottom navigation (mobile)
 - Task drawer slides in from right for editing
-- Colors: red, green, orange, blue, purple, pink, teal, yellow, gray, dark
+- Long-press to drag tasks for reordering (mobile)
+- Edge-scroll auto-tab-switching in Kanban (flutter): drag to edge to switch tabs
+
+## Commands
+```bash
+npm install          # Install all dependencies
+npm run dev          # Start web dev server (connects to deployed API)
+npm run build        # Build all packages
+```

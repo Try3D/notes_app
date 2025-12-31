@@ -26,7 +26,13 @@ export default function Kanban() {
   const [dragOverColumn, setDragOverColumn] = useState<KanbanColumn | null>(null);
   const [dragOverTaskId, setDragOverTaskId] = useState<string | null>(null);
 
-  const getTasksByColumn = (column: KanbanColumn | null) => tasks.filter((t) => t.kanban === column);
+  const getTasksByColumn = (column: KanbanColumn | null) => {
+    if (column === null) {
+      // For unassigned, include tasks with kanban === null OR kanban === undefined
+      return tasks.filter((t) => !t.kanban);
+    }
+    return tasks.filter((t) => t.kanban === column);
+  };
 
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
     setDraggedTaskId(taskId);
@@ -140,15 +146,13 @@ export default function Kanban() {
           onChange={() => handleToggleComplete(task)}
         />
         <span className="kanban-task-title">{task.title || "Untitled"}</span>
-      </div>
-      {task.note && <p className="kanban-task-note">{task.note.slice(0, 80)}{task.note.length > 80 ? "..." : ""}</p>}
-      {task.q && (
-        <div className="kanban-task-footer">
+        {task.q && (
           <span className={`kanban-task-quadrant q-${task.q}`}>
             {task.q === "do" ? "Do" : task.q === "decide" ? "Schedule" : task.q === "delegate" ? "Delegate" : "Eliminate"}
           </span>
-        </div>
-      )}
+        )}
+      </div>
+      {task.note && <p className="kanban-task-note">{task.note.slice(0, 80)}{task.note.length > 80 ? "..." : ""}</p>}
     </div>
   );
 

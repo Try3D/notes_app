@@ -123,6 +123,7 @@ body {
 .main-content {
   flex: 1;
   padding: 20px;
+  padding-bottom: 60px;
   overflow: auto;
 }
 
@@ -171,6 +172,10 @@ header h1 {
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   flex: 1;
+}
+
+.matrix .card {
+  min-height: 200px;
 }
 
 .card {
@@ -222,11 +227,11 @@ header h1 {
 
 .tasks {
   padding: 12px;
-  padding-bottom: 4px;
+  padding-bottom: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: 60px;
+  min-height: 100px;
 }
 
 .task {
@@ -1611,6 +1616,11 @@ body.dark .import-status.error {
   gap: 10px;
 }
 
+.kanban-task-header .kanban-task-quadrant {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .kanban-task-header input[type="checkbox"] {
   -webkit-appearance: none;
   appearance: none;
@@ -1654,7 +1664,7 @@ body.dark .import-status.error {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-left: 42px;
+  margin-top: 8px;
 }
 
 .kanban-task-color {

@@ -1,20 +1,19 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config.dart';
 import '../models/user_data.dart';
 
 class ApiService {
-  // Use your machine's IP for mobile/emulator access
-  // Change to 'http://localhost:8787' for web or 'http://10.0.2.2:8787' for Android emulator
-  static const String baseUrl = 'https://eisenhower-api.rsarans186.workers.dev';
+  static const String baseUrl = apiBaseUrl;
 
   final String? uuid;
 
   ApiService({this.uuid});
 
   Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        if (uuid != null) 'Authorization': 'Bearer $uuid',
-      };
+    'Content-Type': 'application/json',
+    if (uuid != null) 'Authorization': 'Bearer $uuid',
+  };
 
   Future<bool> checkExists(String uuid) async {
     try {
@@ -88,11 +87,7 @@ class ApiService {
       final response = await http.put(
         Uri.parse('$baseUrl/api/data'),
         headers: _headers,
-        body: jsonEncode({
-          'tasks': [],
-          'links': [],
-          'deleted': true,
-        }),
+        body: jsonEncode({'tasks': [], 'links': [], 'deleted': true}),
       );
       return response.statusCode == 200;
     } catch (e) {

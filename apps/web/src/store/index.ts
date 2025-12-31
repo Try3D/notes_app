@@ -72,6 +72,30 @@ function createEmptyData(): UserData {
   return { tasks: [], links: [], createdAt: now, updatedAt: now };
 }
 
+// Migrate/normalize task data - ensures all tasks have required fields
+function migrateData(data: UserData): { data: UserData; needsSave: boolean } {
+  let needsSave = false;
+  const now = Date.now();
+
+  const migratedTasks = data.tasks.map((task) => {
+    // Check if task needs migration (missing kanban field or it's undefined)
+    if (!("kanban" in task) || task.kanban === undefined) {
+      needsSave = true;
+      return { ...task, kanban: null, updatedAt: now };
+    }
+    return task;
+  });
+
+  if (needsSave) {
+    return {
+      data: { ...data, tasks: migratedTasks, updatedAt: now },
+      needsSave: true,
+    };
+  }
+
+  return { data, needsSave: false };
+}
+
 // Fetch data action - ALWAYS fetches from server (source of truth)
 export const fetchDataAtom = atom(null, async (get, set) => {
   const uuid = get(uuidAtom);
@@ -87,15 +111,25 @@ export const fetchDataAtom = atom(null, async (get, set) => {
   const serverData = await forceFetchFromServer(uuid);
 
   if (serverData) {
+    // Migrate data if needed (adds missing fields like kanban: null)
+    const { data: migratedData, needsSave } = migrateData(serverData);
+
     // Force update both state and localStorage
-    set(userDataAtom, serverData);
-    localStorage.setItem(CACHE_KEY, JSON.stringify(serverData));
+    set(userDataAtom, migratedData);
+    localStorage.setItem(CACHE_KEY, JSON.stringify(migratedData));
+
+    // If migration occurred, save back to server
+    if (needsSave) {
+      saveToAPI(uuid, migratedData);
+    }
   } else {
     // Only fallback to cache if server is unreachable
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
       try {
-        set(userDataAtom, JSON.parse(cached));
+        const cachedData = JSON.parse(cached);
+        const { data: migratedData } = migrateData(cachedData);
+        set(userDataAtom, migratedData);
       } catch {
         set(userDataAtom, createEmptyData());
       }
@@ -115,9 +149,17 @@ export const syncFromServerAtom = atom(null, async (get, set) => {
   const serverData = await forceFetchFromServer(uuid);
 
   if (serverData) {
+    // Migrate data if needed
+    const { data: migratedData, needsSave } = migrateData(serverData);
+
     // Force update both state and localStorage
-    set(userDataAtom, serverData);
-    localStorage.setItem(CACHE_KEY, JSON.stringify(serverData));
+    set(userDataAtom, migratedData);
+    localStorage.setItem(CACHE_KEY, JSON.stringify(migratedData));
+
+    // If migration occurred, save back to server
+    if (needsSave) {
+      saveToAPI(uuid, migratedData);
+    }
   }
 });
 
@@ -146,15 +188,28 @@ export const startPollingAtom = atom(null, (get, set) => {
   // Start polling every 30 seconds
   pollInterval = window.setInterval(syncFromServer, POLL_INTERVAL);
 
-  // Also sync on visibility change (tab focus)
+  // Handle visibility change - stop polling when tab is hidden, resume when visible
   const handleVisibilityChange = () => {
     if (document.visibilityState === "visible") {
+      // Tab is visible - resume polling and sync immediately
+      if (!pollInterval) {
+        pollInterval = window.setInterval(syncFromServer, POLL_INTERVAL);
+      }
       syncFromServer();
+    } else {
+      // Tab is hidden - stop polling
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
     }
   };
 
   // Also sync on window focus
   const handleFocus = () => {
+    if (!pollInterval) {
+      pollInterval = window.setInterval(syncFromServer, POLL_INTERVAL);
+    }
     syncFromServer();
   };
 

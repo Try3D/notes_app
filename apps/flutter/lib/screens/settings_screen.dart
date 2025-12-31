@@ -50,7 +50,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       SnackBar(
         content: Text(
           'Data copied to clipboard!',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.white),
         ),
         backgroundColor: AppColors.green,
       ),
@@ -76,7 +78,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       setState(() {
         if (result.success) {
-          _importStatus = 'Imported ${result.tasksImported} tasks and ${result.linksImported} links successfully!';
+          _importStatus =
+              'Imported ${result.tasksImported} tasks and ${result.linksImported} links successfully!';
           _importSuccess = true;
         } else {
           _importStatus = result.error ?? 'Import failed';
@@ -124,45 +127,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final theme = context.watch<ThemeProvider>();
     final maskedUUID = auth.uuid?.replaceAll(RegExp(r'.'), '*') ?? '';
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Settings',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 20),
-              _buildThemeSection(theme),
-              const SizedBox(height: 20),
-              _buildSection(
-                title: 'Your Secret Code',
-                description: 'This is your unique identifier. Keep it safe - it\'s the only way to access your data.',
-                child: _buildUUIDDisplay(auth.uuid, maskedUUID),
-              ),
-              const SizedBox(height: 20),
-              _buildSection(
-                title: 'Export Data',
-                description: 'Copy all your tasks and links as JSON for backup.',
-                child: _buildExportButton(),
-              ),
-              const SizedBox(height: 20),
-              _buildSection(
-                title: 'Import Data',
-                description: 'Restore your tasks and links from a previously exported JSON backup. Copy JSON to clipboard then tap Import.',
-                child: _buildImportSection(),
-              ),
-              const SizedBox(height: 20),
-              _buildLogoutSection(),
-              const SizedBox(height: 20),
-              _buildDangerSection(),
-              const SizedBox(height: 30),
-              _buildFooter(),
-            ],
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Settings',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 20),
+                _buildThemeSection(theme),
+                const SizedBox(height: 20),
+                _buildSection(
+                  title: 'Your Secret Code',
+                  description:
+                      'This is your unique identifier. Keep it safe - it\'s the only way to access your data.',
+                  child: _buildUUIDDisplay(auth.uuid, maskedUUID),
+                ),
+                const SizedBox(height: 20),
+                _buildSection(
+                  title: 'Export Data',
+                  description:
+                      'Copy all your tasks and links as JSON for backup.',
+                  child: _buildExportButton(),
+                ),
+                const SizedBox(height: 20),
+                _buildSection(
+                  title: 'Import Data',
+                  description:
+                      'Restore your tasks and links from a previously exported JSON backup. Copy JSON to clipboard then tap Import.',
+                  child: _buildImportSection(),
+                ),
+                const SizedBox(height: 20),
+                _buildLogoutSection(),
+                const SizedBox(height: 20),
+                _buildDangerSection(),
+                const SizedBox(height: 30),
+                _buildFooter(),
+              ],
+            ),
           ),
         ),
       ),
@@ -175,10 +183,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Appearance',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text('Appearance', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(
             'Choose your preferred theme.',
@@ -214,7 +219,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
   }) {
     final isSelected = theme.isDark == isDark;
-    
+
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -267,14 +272,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             title,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: isDanger ? AppColors.danger : null,
-                ),
+              color: isDanger ? AppColors.danger : null,
+            ),
           ),
           const SizedBox(height: 8),
-          Text(
-            description,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text(description, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 20),
           child,
         ],
@@ -364,8 +366,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: _importSuccess
-                  ? (context.isDark ? const Color(0xFF14532D) : const Color(0xFFDCFCE7))
-                  : (context.isDark ? const Color(0xFF450A0A) : const Color(0xFFFEE2E2)),
+                  ? (context.isDark
+                        ? const Color(0xFF14532D)
+                        : const Color(0xFFDCFCE7))
+                  : (context.isDark
+                        ? const Color(0xFF450A0A)
+                        : const Color(0xFFFEE2E2)),
               borderRadius: BorderRadius.circular(2),
               border: Border.all(
                 color: _importSuccess ? AppColors.green : AppColors.danger,
@@ -376,8 +382,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _importStatus!,
               style: TextStyle(
                 color: _importSuccess
-                    ? (context.isDark ? const Color(0xFFBBF7D0) : const Color(0xFF166534))
-                    : (context.isDark ? const Color(0xFFFECACA) : const Color(0xFF991B1B)),
+                    ? (context.isDark
+                          ? const Color(0xFFBBF7D0)
+                          : const Color(0xFF166534))
+                    : (context.isDark
+                          ? const Color(0xFFFECACA)
+                          : const Color(0xFF991B1B)),
                 fontSize: 14,
               ),
             ),
@@ -418,9 +428,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Text(
             'Danger Zone',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.danger,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(color: AppColors.danger),
           ),
           const SizedBox(height: 8),
           Text(
@@ -445,14 +455,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: context.isDark ? const Color(0xFF422006) : const Color(0xFFFEF3C7),
+                    color: context.isDark
+                        ? const Color(0xFF422006)
+                        : const Color(0xFFFEF3C7),
                     borderRadius: BorderRadius.circular(2),
-                    border: Border.all(color: const Color(0xFFF59E0B), width: 2),
+                    border: Border.all(
+                      color: const Color(0xFFF59E0B),
+                      width: 2,
+                    ),
                   ),
                   child: Text(
                     'Are you sure? This will permanently delete all your data.',
                     style: TextStyle(
-                      color: context.isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
+                      color: context.isDark
+                          ? const Color(0xFFFCD34D)
+                          : const Color(0xFF92400E),
                       fontSize: 14,
                     ),
                   ),
@@ -467,11 +484,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         backgroundColor: AppColors.danger,
                         foregroundColor: Colors.white,
                       ),
-                      child: Text(_deleting ? 'Deleting...' : 'Yes, Delete Everything'),
+                      child: Text(
+                        _deleting ? 'Deleting...' : 'Yes, Delete Everything',
+                      ),
                     ),
                     const SizedBox(height: 12),
                     OutlinedButton(
-                      onPressed: _deleting ? null : () => setState(() => _showDeleteConfirm = false),
+                      onPressed: _deleting
+                          ? null
+                          : () => setState(() => _showDeleteConfirm = false),
                       child: const Text('Cancel'),
                     ),
                   ],
@@ -488,15 +509,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Made with ',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text('Made with ', style: Theme.of(context).textTheme.bodySmall),
           const Icon(Icons.favorite, color: AppColors.red, size: 16),
-          Text(
-            ' by ',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text(' by ', style: Theme.of(context).textTheme.bodySmall),
           GestureDetector(
             onTap: () async {
               final uri = Uri.parse('https://github.com/try3d');
@@ -505,10 +520,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Text(
               'try3d',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.blue,
-                    decoration: TextDecoration.underline,
-                  ),
+                fontWeight: FontWeight.w600,
+                color: AppColors.blue,
+                decoration: TextDecoration.underline,
+              ),
             ),
           ),
         ],

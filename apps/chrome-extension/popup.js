@@ -1,5 +1,4 @@
-// API Configuration
-const API_URL = 'https://eisenhower-api.rsarans186.workers.dev';
+// API_BASE is loaded from config.js
 
 // DOM Elements
 const elements = {
@@ -49,6 +48,11 @@ const elements = {
   eyeOffIcon: document.getElementById('eyeOffIcon'),
   copyUuidBtn: document.getElementById('copyUuidBtn'),
   logoutBtn: document.getElementById('logoutBtn'),
+  backFromSettings: document.getElementById('backFromSettings'),
+  themeToggleBtn: document.getElementById('themeToggleBtn'),
+  themeToggleText: document.getElementById('themeToggleText'),
+  themeBtnSunIcon: document.getElementById('themeBtnSunIcon'),
+  themeBtnMoonIcon: document.getElementById('themeBtnMoonIcon'),
 };
 
 // State
@@ -58,6 +62,7 @@ let state = {
   currentTab: null,
   generatedUuid: null,
   uuidVisible: false,
+  darkMode: false,
 };
 
 // Utility functions
@@ -84,11 +89,12 @@ function showView(viewName) {
     view.classList.remove('hidden');
   }
 
-  // Show/hide settings button based on view
+  // Hide entire header when in settings view (settings has its own header)
+  const header = document.querySelector('.header');
   if (viewName === 'settings') {
-    elements.settingsBtn.classList.add('hidden');
+    header.classList.add('hidden');
   } else {
-    elements.settingsBtn.classList.remove('hidden');
+    header.classList.remove('hidden');
   }
 }
 
@@ -127,13 +133,13 @@ function showStatus(type, message) {
 
 // API functions
 async function checkUuidExists(uuid) {
-  const response = await fetch(`${API_URL}/api/exists/${uuid}`);
+  const response = await fetch(`${API_BASE}/api/exists/${uuid}`);
   const result = await response.json();
   return result.data?.exists || false;
 }
 
 async function registerUuid(uuid) {
-  const response = await fetch(`${API_URL}/api/register`, {
+  const response = await fetch(`${API_BASE}/api/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ uuid }),
@@ -142,14 +148,14 @@ async function registerUuid(uuid) {
 }
 
 async function fetchUserData(uuid) {
-  const response = await fetch(`${API_URL}/api/data`, {
+  const response = await fetch(`${API_BASE}/api/data`, {
     headers: { 'Authorization': `Bearer ${uuid}` },
   });
   return response.json();
 }
 
 async function saveUserData(uuid, data) {
-  const response = await fetch(`${API_URL}/api/data`, {
+  const response = await fetch(`${API_BASE}/api/data`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -198,6 +204,37 @@ function updateUuidDisplay() {
     elements.eyeIcon.classList.remove('hidden');
     elements.eyeOffIcon.classList.add('hidden');
   }
+}
+
+// Theme functions
+function applyTheme() {
+  if (state.darkMode) {
+    document.body.classList.add('dark');
+    elements.themeBtnSunIcon.classList.add('hidden');
+    elements.themeBtnMoonIcon.classList.remove('hidden');
+    elements.themeToggleText.textContent = 'Switch to Light Mode';
+  } else {
+    document.body.classList.remove('dark');
+    elements.themeBtnSunIcon.classList.remove('hidden');
+    elements.themeBtnMoonIcon.classList.add('hidden');
+    elements.themeToggleText.textContent = 'Switch to Dark Mode';
+  }
+}
+
+async function saveTheme() {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ darkMode: state.darkMode }, resolve);
+  });
+}
+
+async function loadTheme() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['darkMode'], (result) => {
+      state.darkMode = result.darkMode || false;
+      applyTheme();
+      resolve();
+    });
+  });
 }
 
 // Tab functions
@@ -362,17 +399,30 @@ function setupEventListeners() {
     }
   });
 
+  // Settings view - back button
+  elements.backFromSettings.addEventListener('click', async () => {
+    await initBookmarkView();
+  });
+
   // Settings view - UUID visibility toggle
   elements.toggleUuidBtn.addEventListener('click', () => {
     state.uuidVisible = !state.uuidVisible;
     updateUuidDisplay();
   });
 
-  // Settings view
+  // Settings view - copy UUID
   elements.copyUuidBtn.addEventListener('click', async () => {
     await navigator.clipboard.writeText(state.uuid);
   });
 
+  // Settings view - theme toggle
+  elements.themeToggleBtn.addEventListener('click', () => {
+    state.darkMode = !state.darkMode;
+    applyTheme();
+    saveTheme();
+  });
+
+  // Settings view - logout
   elements.logoutBtn.addEventListener('click', async () => {
     await clearStoredUuid();
     state.uuid = null;
@@ -445,6 +495,9 @@ async function initBookmarkView() {
 // Initialize
 async function init() {
   setupEventListeners();
+
+  // Load theme
+  await loadTheme();
 
   // Check if user is already logged in
   state.uuid = await getStoredUuid();

@@ -7,6 +7,7 @@ import 'services/storage_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/matrix_screen.dart';
+import 'screens/kanban_screen.dart';
 import 'screens/todos_screen.dart';
 import 'screens/links_screen.dart';
 import 'screens/settings_screen.dart';
@@ -160,8 +161,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           const SizedBox(height: 14),
           _buildNavItem(0, Icons.check_circle_outline, 'Todos'),
           _buildNavItem(1, Icons.grid_view, 'Matrix'),
-          _buildNavItem(2, Icons.link, 'Links'),
-          _buildNavItem(3, Icons.settings, 'Settings'),
+          _buildNavItem(2, Icons.view_kanban_outlined, 'Kanban'),
+          _buildNavItem(3, Icons.link, 'Links'),
+          _buildNavItem(4, Icons.settings, 'Settings'),
           const Spacer(),
           const SizedBox(height: 14),
         ],
@@ -214,12 +216,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         top: false,
         minimum: const EdgeInsets.only(bottom: 4),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildBottomNavItem(0, Icons.check_circle_outline, 'Todos'),
             _buildBottomNavItem(1, Icons.grid_view, 'Matrix'),
-            _buildBottomNavItem(2, Icons.link, 'Links'),
-            _buildBottomNavItem(3, Icons.settings, 'Settings'),
+            _buildBottomNavItem(2, Icons.view_kanban_outlined, 'Kanban'),
+            _buildBottomNavItem(3, Icons.link, 'Links'),
+            _buildBottomNavItem(4, Icons.settings, 'Settings'),
           ],
         ),
       ),
@@ -229,22 +231,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildBottomNavItem(int index, IconData icon, String label) {
     final isSelected = _selectedIndex == index;
 
-    return InkWell(
-      onTap: () => setState(() => _selectedIndex = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: isSelected ? AppColors.blue : context.mutedColor),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _selectedIndex = index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
                 color: isSelected ? AppColors.blue : context.mutedColor,
+                size: 22,
               ),
-            ),
-          ],
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: isSelected ? AppColors.blue : context.mutedColor,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -257,8 +266,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       case 1:
         return const MatrixScreen();
       case 2:
-        return const LinksScreen();
+        return const KanbanScreen();
       case 3:
+        return const LinksScreen();
+      case 4:
         return const SettingsScreen();
       default:
         return const TodosScreen();

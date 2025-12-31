@@ -1,5 +1,7 @@
 enum Quadrant { doFirst, decide, delegate, eliminate }
 
+enum KanbanColumn { backlog, todo, inProgress, done }
+
 class Task {
   final String id;
   String title;
@@ -7,6 +9,7 @@ class Task {
   List<String> tags;
   String color;
   Quadrant? q;
+  KanbanColumn? kanban;
   bool completed;
   final int createdAt;
   int updatedAt;
@@ -18,6 +21,7 @@ class Task {
     List<String>? tags,
     this.color = '#ef4444',
     this.q,
+    this.kanban,
     this.completed = false,
     required this.createdAt,
     required this.updatedAt,
@@ -31,9 +35,12 @@ class Task {
       tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
       color: json['color'] as String? ?? '#ef4444',
       q: _parseQuadrant(json['q']),
+      kanban: _parseKanban(json['kanban']),
       completed: json['completed'] as bool? ?? false,
-      createdAt: json['createdAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
-      updatedAt: json['updatedAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
+      createdAt:
+          json['createdAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
+      updatedAt:
+          json['updatedAt'] as int? ?? DateTime.now().millisecondsSinceEpoch,
     );
   }
 
@@ -45,6 +52,7 @@ class Task {
       'tags': tags,
       'color': color,
       'q': _quadrantToString(q),
+      'kanban': _kanbanToString(kanban),
       'completed': completed,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -58,10 +66,12 @@ class Task {
     List<String>? tags,
     String? color,
     Quadrant? q,
+    KanbanColumn? kanban,
     bool? completed,
     int? createdAt,
     int? updatedAt,
     bool clearQuadrant = false,
+    bool clearKanban = false,
   }) {
     return Task(
       id: id ?? this.id,
@@ -70,6 +80,7 @@ class Task {
       tags: tags ?? List.from(this.tags),
       color: color ?? this.color,
       q: clearQuadrant ? null : (q ?? this.q),
+      kanban: clearKanban ? null : (kanban ?? this.kanban),
       completed: completed ?? this.completed,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -103,6 +114,36 @@ class Task {
         return 'delegate';
       case Quadrant.eliminate:
         return 'delete';
+    }
+  }
+
+  static KanbanColumn? _parseKanban(dynamic value) {
+    if (value == null) return null;
+    switch (value) {
+      case 'backlog':
+        return KanbanColumn.backlog;
+      case 'todo':
+        return KanbanColumn.todo;
+      case 'in-progress':
+        return KanbanColumn.inProgress;
+      case 'done':
+        return KanbanColumn.done;
+      default:
+        return null;
+    }
+  }
+
+  static String? _kanbanToString(KanbanColumn? k) {
+    if (k == null) return null;
+    switch (k) {
+      case KanbanColumn.backlog:
+        return 'backlog';
+      case KanbanColumn.todo:
+        return 'todo';
+      case KanbanColumn.inProgress:
+        return 'in-progress';
+      case KanbanColumn.done:
+        return 'done';
     }
   }
 }

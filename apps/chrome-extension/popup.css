@@ -316,9 +316,20 @@ input[type="text"]::placeholder {
 }
 
 /* Settings view */
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settings-divider {
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 12px;
+}
+
 .section-title {
   font-size: 1.1em;
-  margin-bottom: 4px;
+  margin: 0;
 }
 
 .settings-section {
@@ -326,13 +337,42 @@ input[type="text"]::placeholder {
   border: 2px solid var(--border);
   border-radius: 2px;
   padding: 12px;
+  margin-bottom: 12px;
 }
 
 .settings-label {
   display: block;
+  font-size: 1em;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.settings-description {
   font-size: 0.85em;
   color: var(--muted);
-  margin-bottom: 8px;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+}
+
+.settings-btn {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: 2px;
+  font-family: 'Short Stack', cursive;
+  font-size: 0.95em;
+  cursor: pointer;
+  transition: 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--card);
+  color: var(--text);
+}
+
+.settings-btn:hover {
+  background: var(--hover);
 }
 
 .uuid-display {
@@ -349,7 +389,8 @@ input[type="text"]::placeholder {
   flex: 1;
   font-family: 'Short Stack', cursive;
   font-size: 0.75em;
-  word-break: break-all;
+  white-space: nowrap;
+  overflow-x: auto;
   color: var(--text);
 }
 
@@ -399,4 +440,18 @@ input[type="text"]::placeholder {
 .uuid-actions {
   display: flex;
   gap: 4px;
+}
+
+/* Dark mode */
+body.dark {
+  --bg: #1a1a1a;
+  --card: #252525;
+  --border: #e0e0e0;
+  --text: #f0f0f0;
+  --muted: #a0a0a0;
+  --hover: #333333;
+  --warning-bg: #422006;
+  --warning-border: #f59e0b;
+  --warning-text: #fcd34d;
+  --loading-bg: rgba(26, 26, 26, 0.9);
 }

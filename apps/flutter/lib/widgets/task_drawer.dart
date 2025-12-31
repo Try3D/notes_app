@@ -10,6 +10,7 @@ Future<void> showTaskEditor({
   required Function(Task) onUpdate,
   required VoidCallback onDelete,
   bool showQuadrant = true,
+  bool showKanban = false,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -20,6 +21,7 @@ Future<void> showTaskEditor({
       onUpdate: onUpdate,
       onDelete: onDelete,
       showQuadrant: showQuadrant,
+      showKanban: showKanban,
     ),
   );
 }
@@ -29,6 +31,7 @@ class TaskEditorSheet extends StatefulWidget {
   final Function(Task) onUpdate;
   final VoidCallback onDelete;
   final bool showQuadrant;
+  final bool showKanban;
 
   const TaskEditorSheet({
     super.key,
@@ -36,6 +39,7 @@ class TaskEditorSheet extends StatefulWidget {
     required this.onUpdate,
     required this.onDelete,
     this.showQuadrant = true,
+    this.showKanban = false,
   });
 
   @override
@@ -91,6 +95,16 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
     widget.onUpdate(updated);
   }
 
+  void _updateKanban(KanbanColumn? k) {
+    final updated = _currentTask.copyWith(
+      kanban: k,
+      clearKanban: k == null,
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    setState(() => _currentTask = updated);
+    widget.onUpdate(updated);
+  }
+
   void _handleDelete() {
     Navigator.of(context).pop();
     widget.onDelete();
@@ -99,7 +113,7 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
-    
+
     return Padding(
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).size.height * 0.2,
@@ -146,10 +160,16 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
                   _buildQuadrantSelector(),
                   const SizedBox(height: 16),
                 ],
-                Text(
-                  'Color',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                if (widget.showKanban) ...[
+                  Text(
+                    'Kanban Column',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildKanbanSelector(),
+                  const SizedBox(height: 16),
+                ],
+                Text('Color', style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(height: 8),
                 _buildColorPicker(),
                 const SizedBox(height: 20),
@@ -179,10 +199,7 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'Edit Task',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
+        Text('Edit Task', style: Theme.of(context).textTheme.titleLarge),
         IconButton(
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(Icons.close),
@@ -207,23 +224,38 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
           items: [
             DropdownMenuItem(
               value: null,
-              child: Text('Unassigned', style: Theme.of(context).textTheme.bodyMedium),
+              child: Text(
+                'Unassigned',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
             DropdownMenuItem(
               value: Quadrant.doFirst,
-              child: Text('Do First', style: Theme.of(context).textTheme.bodyMedium),
+              child: Text(
+                'Do First',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
             DropdownMenuItem(
               value: Quadrant.decide,
-              child: Text('Schedule', style: Theme.of(context).textTheme.bodyMedium),
+              child: Text(
+                'Schedule',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
             DropdownMenuItem(
               value: Quadrant.delegate,
-              child: Text('Delegate', style: Theme.of(context).textTheme.bodyMedium),
+              child: Text(
+                'Delegate',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
             DropdownMenuItem(
               value: Quadrant.eliminate,
-              child: Text('Eliminate', style: Theme.of(context).textTheme.bodyMedium),
+              child: Text(
+                'Eliminate',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
           ],
           onChanged: _updateQuadrant,
@@ -232,10 +264,73 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
     );
   }
 
+  Widget _buildKanbanSelector() {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: context.borderColor, width: 2),
+        borderRadius: BorderRadius.circular(2),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<KanbanColumn?>(
+          value: _currentTask.kanban,
+          isExpanded: true,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          dropdownColor: context.cardColor,
+          items: [
+            DropdownMenuItem(
+              value: null,
+              child: Text(
+                'Unassigned',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            DropdownMenuItem(
+              value: KanbanColumn.backlog,
+              child: Text(
+                'Backlog',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            DropdownMenuItem(
+              value: KanbanColumn.todo,
+              child: Text(
+                'To Do',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            DropdownMenuItem(
+              value: KanbanColumn.inProgress,
+              child: Text(
+                'In Progress',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            DropdownMenuItem(
+              value: KanbanColumn.done,
+              child: Text(
+                'Done',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+          ],
+          onChanged: _updateKanban,
+        ),
+      ),
+    );
+  }
+
   Widget _buildColorPicker() {
     final colors = [
-      '#ef4444', '#22c55e', '#f97316', '#3b82f6', '#8b5cf6',
-      '#ec4899', '#14b8a6', '#facc15', '#64748b', '#0f172a',
+      '#ef4444',
+      '#22c55e',
+      '#f97316',
+      '#3b82f6',
+      '#8b5cf6',
+      '#ec4899',
+      '#14b8a6',
+      '#facc15',
+      '#64748b',
+      '#0f172a',
     ];
 
     return Wrap(
@@ -279,7 +374,10 @@ class _TaskEditorSheetState extends State<TaskEditorSheet> {
               child: const Center(
                 child: Text(
                   'Done',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
