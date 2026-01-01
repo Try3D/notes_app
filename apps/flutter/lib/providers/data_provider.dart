@@ -12,9 +12,6 @@ class DataProvider extends ChangeNotifier {
   String? _uuid;
   UserData? _data;
   bool _isLoading = true;
-  Timer? _pollTimer;
-  bool _isPollingActive = false;
-  static const _pollInterval = Duration(seconds: 30);
 
   DataProvider(this._storage);
 
@@ -27,39 +24,16 @@ class DataProvider extends ChangeNotifier {
     _uuid = uuid;
     if (uuid != null) {
       _loadData();
-      startPolling();
     } else {
-      stopPolling();
       _data = null;
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  void startPolling() {
-    if (_isPollingActive || _uuid == null) return;
-    _isPollingActive = true;
-
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(_pollInterval, (_) {
-      _forceSyncFromServer();
-    });
-  }
-
-  void stopPolling() {
-    _isPollingActive = false;
-    _pollTimer?.cancel();
-    _pollTimer = null;
-  }
-
   void onAppResumed() {
     if (_uuid == null) return;
-    startPolling();
     _forceSyncFromServer();
-  }
-
-  void onAppPaused() {
-    stopPolling();
   }
 
   Future<void> _forceSyncFromServer() async {
@@ -284,7 +258,6 @@ class DataProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    _pollTimer?.cancel();
     super.dispose();
   }
 }

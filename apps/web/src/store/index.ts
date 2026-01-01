@@ -3,7 +3,6 @@ import type { Task, Link, UserData } from "@eisenhower/shared";
 import { API_URL } from "../config";
 
 const CACHE_KEY = "eisenhower_data";
-const POLL_INTERVAL = 30000;
 
 export const uuidAtom = atom<string | null>(localStorage.getItem("uuid"));
 export const loadingAtom = atom(true);
@@ -141,18 +140,11 @@ export const syncFromServerAtom = atom(null, async (get, set) => {
   }
 });
 
-let pollInterval: number | null = null;
-
-export const startPollingAtom = atom(null, (get, set) => {
-  const uuid = get(uuidAtom);
-  if (!uuid) return;
-
-  if (pollInterval) {
-    clearInterval(pollInterval);
-    pollInterval = null;
-  }
-
+export const setupVisibilityListenerAtom = atom(null, (get, set) => {
   const syncFromServer = async () => {
+    const uuid = get(uuidAtom);
+    if (!uuid) return;
+
     const serverData = await forceFetchFromServer(uuid);
     if (serverData) {
       set(userDataAtom, serverData);
@@ -160,40 +152,14 @@ export const startPollingAtom = atom(null, (get, set) => {
     }
   };
 
-  pollInterval = window.setInterval(syncFromServer, POLL_INTERVAL);
-
   const handleVisibilityChange = () => {
     if (document.visibilityState === "visible") {
-      if (!pollInterval) {
-        pollInterval = window.setInterval(syncFromServer, POLL_INTERVAL);
-      }
       syncFromServer();
-    } else {
-      if (pollInterval) {
-        clearInterval(pollInterval);
-        pollInterval = null;
-      }
     }
-  };
-
-  const handleFocus = () => {
-    if (!pollInterval) {
-      pollInterval = window.setInterval(syncFromServer, POLL_INTERVAL);
-    }
-    syncFromServer();
   };
 
   document.removeEventListener("visibilitychange", handleVisibilityChange);
   document.addEventListener("visibilitychange", handleVisibilityChange);
-  window.removeEventListener("focus", handleFocus);
-  window.addEventListener("focus", handleFocus);
-});
-
-export const stopPollingAtom = atom(null, () => {
-  if (pollInterval) {
-    clearInterval(pollInterval);
-    pollInterval = null;
-  }
 });
 
 export const addTaskAtom = atom(null, (get, set, partial: Partial<Task>) => {
@@ -434,6 +400,6 @@ export const generateUUID = (): string => {
 
 export const isValidUUID = (uuid: string): boolean => {
   const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uuid);
 };

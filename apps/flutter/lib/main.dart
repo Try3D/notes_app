@@ -95,17 +95,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final data = context.read<DataProvider>();
-    switch (state) {
-      case AppLifecycleState.resumed:
-        data.onAppResumed();
-        break;
-      case AppLifecycleState.paused:
-      case AppLifecycleState.inactive:
-      case AppLifecycleState.detached:
-      case AppLifecycleState.hidden:
-        data.onAppPaused();
-        break;
+    if (state == AppLifecycleState.resumed) {
+      final data = context.read<DataProvider>();
+      data.onAppResumed();
     }
   }
 

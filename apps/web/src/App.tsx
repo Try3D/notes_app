@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { uuidAtom, fetchDataAtom, startPollingAtom, stopPollingAtom } from './store'
+import { uuidAtom, fetchDataAtom, setupVisibilityListenerAtom } from './store'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Todos from './pages/Todos'
@@ -21,8 +21,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   const uuid = useAtomValue(uuidAtom)
   const fetchData = useSetAtom(fetchDataAtom)
-  const startPolling = useSetAtom(startPollingAtom)
-  const stopPolling = useSetAtom(stopPollingAtom)
+  const setupVisibilityListener = useSetAtom(setupVisibilityListenerAtom)
 
   useEffect(() => {
     fetchData()
@@ -30,14 +29,9 @@ function App() {
 
   useEffect(() => {
     if (uuid) {
-      startPolling()
-    } else {
-      stopPolling()
+      setupVisibilityListener()
     }
-    return () => {
-      stopPolling()
-    }
-  }, [uuid, startPolling, stopPolling])
+  }, [uuid, setupVisibilityListener])
 
   return (
     <Routes>
