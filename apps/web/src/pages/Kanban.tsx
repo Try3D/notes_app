@@ -109,8 +109,8 @@ export default function Kanban() {
     }
   };
 
-  const handleAddTask = (column: KanbanColumn) => {
-    const newTask = addTask({
+  const handleAddTask = async (column: KanbanColumn) => {
+    const newTask = await addTask({
       title: "",
       note: "",
       tags: [],

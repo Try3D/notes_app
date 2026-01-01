@@ -60,8 +60,8 @@ export default function Todos() {
 
   const sortedColors = COLORS.filter((c) => grouped[c]);
 
-  const handleAddTask = () => {
-    const newTask = addTask({
+  const handleAddTask = async () => {
+    const newTask = await addTask({
       title: "",
       note: "",
       tags: [],

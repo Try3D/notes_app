@@ -6,10 +6,12 @@
   "observability": {
     "enabled": true
   },
-  "kv_namespaces": [
+  "d1_databases": [
     {
-      "binding": "KV",
-      "id": "bbc7614ed6124dca84cca2c3e3d01a8d"
+      "binding": "DB",
+      "database_name": "eisenhower-db",
+      "database_id": "c9faef7a-7f64-4225-98d8-745ec4e04ea7",
+      "migrations_dir": "migrations"
     }
   ]
 }

@@ -76,6 +76,18 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _selectedIndex = 0;
 
+  void _onTabChanged(int index) {
+    setState(() => _selectedIndex = index);
+    final data = context.read<DataProvider>();
+    if (index == 3) {
+      data.setActivePage(ActivePage.links);
+    } else if (index == 4) {
+      data.setActivePage(ActivePage.settings);
+    } else {
+      data.setActivePage(ActivePage.tasks);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -95,9 +107,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      final data = context.read<DataProvider>();
-      data.onAppResumed();
+    final data = context.read<DataProvider>();
+    switch (state) {
+      case AppLifecycleState.resumed:
+        data.onAppResumed();
+        break;
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        data.onAppPaused();
+        break;
     }
   }
 
@@ -170,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => setState(() => _selectedIndex = index),
+            onTap: () => _onTabChanged(index),
             borderRadius: BorderRadius.circular(2),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
@@ -222,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return Expanded(
       child: InkWell(
-        onTap: () => setState(() => _selectedIndex = index),
+        onTap: () => _onTabChanged(index),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Column(

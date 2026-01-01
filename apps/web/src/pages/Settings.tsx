@@ -1,13 +1,15 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAtomValue, useSetAtom } from "jotai";
-import { uuidAtom, userDataAtom, logoutAtom, importDataAtom } from "../store";
+import { uuidAtom, tasksAtom, linksAtom, logoutAtom, importDataAtom, deleteAccountAtom } from "../store";
 
 export default function Settings() {
   const uuid = useAtomValue(uuidAtom);
-  const data = useAtomValue(userDataAtom);
+  const tasks = useAtomValue(tasksAtom);
+  const links = useAtomValue(linksAtom);
   const logout = useSetAtom(logoutAtom);
   const importData = useSetAtom(importDataAtom);
+  const deleteAccount = useSetAtom(deleteAccountAtom);
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -29,10 +31,9 @@ export default function Settings() {
   };
 
   const handleExport = () => {
-    if (!data) return;
-
     const exportData = {
-      ...data,
+      tasks,
+      links,
       exportedAt: new Date().toISOString(),
     };
 
@@ -61,7 +62,7 @@ export default function Settings() {
 
     try {
       const text = await file.text();
-      const result = importData(text);
+      const result = await importData(text);
 
       if (result.success) {
         setImportStatus({
@@ -92,18 +93,7 @@ export default function Settings() {
     setDeleting(true);
 
     try {
-      await fetch("/api/data", {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${uuid}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ tasks: [], links: [], deleted: true }),
-      });
-
-      localStorage.removeItem("eisenhower_data");
-      logout();
-
+      await deleteAccount();
       navigate("/login");
     } catch (error) {
       console.error("Failed to delete account:", error);

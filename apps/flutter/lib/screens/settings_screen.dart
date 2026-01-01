@@ -70,7 +70,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final json = jsonDecode(clipboardData!.text!);
       final data = context.read<DataProvider>();
-      final result = data.importData(json);
+      final result = await data.importData(json);
 
       setState(() {
         if (result.success) {

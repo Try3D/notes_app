@@ -7,33 +7,90 @@ import '../models/user_data.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 
+enum ActivePage { tasks, links, settings }
+
 class DataProvider extends ChangeNotifier {
   final StorageService _storage;
   String? _uuid;
-  UserData? _data;
+  List<Task> _tasks = [];
+  List<Link> _links = [];
   bool _isLoading = true;
+  Timer? _pollTimer;
+  bool _isPollingActive = false;
+  ActivePage _activePage = ActivePage.tasks;
+  static const _pollInterval = Duration(seconds: 30);
 
   DataProvider(this._storage);
 
-  UserData? get data => _data;
-  List<Task> get tasks => _data?.tasks ?? [];
-  List<Link> get links => _data?.links ?? [];
+  List<Task> get tasks => _tasks;
+  List<Link> get links => _links;
   bool get isLoading => _isLoading;
+  ActivePage get activePage => _activePage;
+
+  void setActivePage(ActivePage page) {
+    _activePage = page;
+  }
 
   void setUUID(String? uuid) {
     _uuid = uuid;
     if (uuid != null) {
       _loadData();
+      startPolling();
     } else {
-      _data = null;
+      stopPolling();
+      _tasks = [];
+      _links = [];
       _isLoading = false;
       notifyListeners();
     }
   }
 
+  void startPolling() {
+    if (_isPollingActive || _uuid == null) return;
+    _isPollingActive = true;
+
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(_pollInterval, (_) {
+      _pollActivePage();
+    });
+  }
+
+  void stopPolling() {
+    _isPollingActive = false;
+    _pollTimer?.cancel();
+    _pollTimer = null;
+  }
+
+  Future<void> _pollActivePage() async {
+    if (_uuid == null) return;
+
+    final api = ApiService(uuid: _uuid);
+
+    if (_activePage == ActivePage.links) {
+      final apiLinks = await api.fetchLinks();
+      if (apiLinks != null) {
+        _links = apiLinks;
+        _saveCachedData();
+        notifyListeners();
+      }
+    } else {
+      final apiTasks = await api.fetchTasks();
+      if (apiTasks != null) {
+        _tasks = apiTasks;
+        _saveCachedData();
+        notifyListeners();
+      }
+    }
+  }
+
   void onAppResumed() {
     if (_uuid == null) return;
+    startPolling();
     _forceSyncFromServer();
+  }
+
+  void onAppPaused() {
+    stopPolling();
   }
 
   Future<void> _forceSyncFromServer() async {
@@ -43,8 +100,9 @@ class DataProvider extends ChangeNotifier {
     final apiData = await api.fetchData();
 
     if (apiData != null) {
-      _data = apiData;
-      await _storage.setCachedData(apiData);
+      _tasks = apiData.tasks;
+      _links = apiData.links;
+      _saveCachedData();
       notifyListeners();
     }
   }
@@ -57,14 +115,14 @@ class DataProvider extends ChangeNotifier {
       final api = ApiService(uuid: _uuid);
       final apiData = await api.fetchData();
       if (apiData != null) {
-        _data = apiData;
-        await _storage.setCachedData(apiData);
+        _tasks = apiData.tasks;
+        _links = apiData.links;
+        _saveCachedData();
       } else {
         final cached = _storage.getCachedData();
         if (cached != null) {
-          _data = cached;
-        } else {
-          _data = UserData.empty();
+          _tasks = cached.tasks;
+          _links = cached.links;
         }
       }
     }
@@ -73,18 +131,19 @@ class DataProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> refetch() async {
-    await _loadData();
+  void _saveCachedData() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final userData = UserData(
+      tasks: _tasks,
+      links: _links,
+      createdAt: now,
+      updatedAt: now,
+    );
+    _storage.setCachedData(userData);
   }
 
-  Future<void> _syncToAPI() async {
-    if (_uuid == null || _data == null) return;
-
-    _data!.updatedAt = DateTime.now().millisecondsSinceEpoch;
-    await _storage.setCachedData(_data!);
-
-    final api = ApiService(uuid: _uuid);
-    await api.saveData(_data!);
+  Future<void> refetch() async {
+    await _loadData();
   }
 
   Task addTask({
@@ -110,10 +169,13 @@ class DataProvider extends ChangeNotifier {
       updatedAt: now,
     );
 
-    _data ??= UserData.empty();
-    _data!.tasks.add(task);
+    _tasks.add(task);
     notifyListeners();
-    _syncToAPI();
+    _saveCachedData();
+
+    final api = ApiService(uuid: _uuid);
+    api.createTask(task);
+
     return task;
   }
 
@@ -129,13 +191,11 @@ class DataProvider extends ChangeNotifier {
     bool clearQuadrant = false,
     bool clearKanban = false,
   }) {
-    if (_data == null) return;
-
-    final index = _data!.tasks.indexWhere((t) => t.id == id);
+    final index = _tasks.indexWhere((t) => t.id == id);
     if (index == -1) return;
 
-    final task = _data!.tasks[index];
-    _data!.tasks[index] = task.copyWith(
+    final task = _tasks[index];
+    final updatedTask = task.copyWith(
       title: title,
       note: note,
       tags: tags,
@@ -148,21 +208,25 @@ class DataProvider extends ChangeNotifier {
       updatedAt: DateTime.now().millisecondsSinceEpoch,
     );
 
+    _tasks[index] = updatedTask;
     notifyListeners();
-    _syncToAPI();
+    _saveCachedData();
+
+    final api = ApiService(uuid: _uuid);
+    api.updateTask(id, updatedTask.toJson());
   }
 
   void deleteTask(String id) {
-    if (_data == null) return;
-    _data!.tasks.removeWhere((t) => t.id == id);
+    _tasks.removeWhere((t) => t.id == id);
     notifyListeners();
-    _syncToAPI();
+    _saveCachedData();
+
+    final api = ApiService(uuid: _uuid);
+    api.deleteTask(id);
   }
 
   void reorderTasks(List<String> taskIds) {
-    if (_data == null) return;
-
-    final taskMap = {for (var t in _data!.tasks) t.id: t};
+    final taskMap = {for (var t in _tasks) t.id: t};
     final reordered = <Task>[];
 
     for (final id in taskIds) {
@@ -173,10 +237,13 @@ class DataProvider extends ChangeNotifier {
     }
 
     reordered.addAll(taskMap.values);
-    _data!.tasks = reordered;
+    _tasks = reordered;
 
     notifyListeners();
-    _syncToAPI();
+    _saveCachedData();
+
+    final api = ApiService(uuid: _uuid);
+    api.reorderTasks(taskIds);
   }
 
   Link addLink({required String url, String title = '', String favicon = ''}) {
@@ -188,24 +255,27 @@ class DataProvider extends ChangeNotifier {
       createdAt: DateTime.now().millisecondsSinceEpoch,
     );
 
-    _data ??= UserData.empty();
-    _data!.links.add(link);
+    _links.add(link);
     notifyListeners();
-    _syncToAPI();
+    _saveCachedData();
+
+    final api = ApiService(uuid: _uuid);
+    api.createLink(link);
+
     return link;
   }
 
   void deleteLink(String id) {
-    if (_data == null) return;
-    _data!.links.removeWhere((l) => l.id == id);
+    _links.removeWhere((l) => l.id == id);
     notifyListeners();
-    _syncToAPI();
+    _saveCachedData();
+
+    final api = ApiService(uuid: _uuid);
+    api.deleteLink(id);
   }
 
   void reorderLinks(List<String> linkIds) {
-    if (_data == null) return;
-
-    final linkMap = {for (var l in _data!.links) l.id: l};
+    final linkMap = {for (var l in _links) l.id: l};
     final reordered = <Link>[];
 
     for (final id in linkIds) {
@@ -216,18 +286,24 @@ class DataProvider extends ChangeNotifier {
     }
 
     reordered.addAll(linkMap.values);
-    _data!.links = reordered;
+    _links = reordered;
 
     notifyListeners();
-    _syncToAPI();
+    _saveCachedData();
+
+    final api = ApiService(uuid: _uuid);
+    api.reorderLinks(linkIds);
   }
 
   Map<String, dynamic>? exportData() {
-    if (_data == null) return null;
-    return {..._data!.toJson(), 'exportedAt': DateTime.now().toIso8601String()};
+    return {
+      'tasks': _tasks.map((t) => t.toJson()).toList(),
+      'links': _links.map((l) => l.toJson()).toList(),
+      'exportedAt': DateTime.now().toIso8601String(),
+    };
   }
 
-  ImportResult importData(Map<String, dynamic> json) {
+  Future<ImportResult> importData(Map<String, dynamic> json) async {
     try {
       final importedData = UserData.fromJson(json);
 
@@ -238,10 +314,18 @@ class DataProvider extends ChangeNotifier {
         );
       }
 
-      _data = importedData;
-      _data!.updatedAt = DateTime.now().millisecondsSinceEpoch;
+      _tasks = importedData.tasks;
+      _links = importedData.links;
       notifyListeners();
-      _syncToAPI();
+      _saveCachedData();
+
+      final api = ApiService(uuid: _uuid);
+      for (final task in _tasks) {
+        await api.createTask(task);
+      }
+      for (final link in _links) {
+        await api.createLink(link);
+      }
 
       return ImportResult(
         success: true,
@@ -258,6 +342,7 @@ class DataProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     super.dispose();
   }
 }

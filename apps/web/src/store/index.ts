@@ -2,170 +2,132 @@ import { atom } from "jotai";
 import type { Task, Link, UserData } from "@eisenhower/shared";
 import { API_URL } from "../config";
 
-const CACHE_KEY = "eisenhower_data";
+const TASKS_CACHE_KEY = "eisenhower_tasks";
+const LINKS_CACHE_KEY = "eisenhower_links";
 
 export const uuidAtom = atom<string | null>(localStorage.getItem("uuid"));
 export const loadingAtom = atom(true);
-export const userDataAtom = atom<UserData | null>(null);
-
-export const tasksAtom = atom((get) => get(userDataAtom)?.tasks ?? []);
-export const linksAtom = atom((get) => get(userDataAtom)?.links ?? []);
+export const tasksAtom = atom<Task[]>([]);
+export const linksAtom = atom<Link[]>([]);
+export const activePageAtom = atom<"tasks" | "links">("tasks");
 
 export const setUuidAtom = atom(null, (_get, set, uuid: string | null) => {
   if (uuid) {
     localStorage.setItem("uuid", uuid);
   } else {
     localStorage.removeItem("uuid");
-    localStorage.removeItem(CACHE_KEY);
+    localStorage.removeItem(TASKS_CACHE_KEY);
+    localStorage.removeItem(LINKS_CACHE_KEY);
   }
   set(uuidAtom, uuid);
 });
 
-const saveToAPI = async (uuid: string, data: UserData) => {
-  try {
-    await fetch(`${API_URL}/api/data`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${uuid}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-  } catch (error) {
-    console.error("Failed to save data:", error);
-  }
-};
-
-const saveData = (uuid: string | null, data: UserData) => {
-  localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-  if (uuid) saveToAPI(uuid, data);
-};
-
-const forceFetchFromServer = async (uuid: string): Promise<UserData | null> => {
-  try {
-    const response = await fetch(`${API_URL}/api/data?_t=${Date.now()}`, {
-      headers: {
-        Authorization: `Bearer ${uuid}`,
-        "Content-Type": "application/json",
-      },
-      cache: "no-store",
-    });
-    const result = await response.json();
-    if (result.success && result.data) {
-      return result.data;
-    }
-  } catch (error) {
-    console.error("Failed to fetch from server:", error);
-  }
-  return null;
-};
-
-function createEmptyData(): UserData {
-  const now = Date.now();
-  return { tasks: [], links: [], createdAt: now, updatedAt: now };
-}
-
-function migrateData(data: UserData): { data: UserData; needsSave: boolean } {
-  let needsSave = false;
-  const now = Date.now();
-
-  const migratedTasks = data.tasks.map((task) => {
-    if (!("kanban" in task) || task.kanban === undefined) {
-      needsSave = true;
-      return { ...task, kanban: null, updatedAt: now };
-    }
-    return task;
-  });
-
-  if (needsSave) {
-    return {
-      data: { ...data, tasks: migratedTasks, updatedAt: now },
-      needsSave: true,
-    };
-  }
-
-  return { data, needsSave: false };
-}
+const getAuthHeaders = (uuid: string) => ({
+  Authorization: `Bearer ${uuid}`,
+  "Content-Type": "application/json",
+});
 
 export const fetchDataAtom = atom(null, async (get, set) => {
   const uuid = get(uuidAtom);
   if (!uuid) {
-    set(userDataAtom, null);
+    set(tasksAtom, []);
+    set(linksAtom, []);
     set(loadingAtom, false);
     return;
   }
 
   set(loadingAtom, true);
 
-  const serverData = await forceFetchFromServer(uuid);
+  try {
+    const response = await fetch(`${API_URL}/api/data`, {
+      headers: getAuthHeaders(uuid),
+    });
+    const result = await response.json();
 
-  if (serverData) {
-    const { data: migratedData, needsSave } = migrateData(serverData);
-    set(userDataAtom, migratedData);
-    localStorage.setItem(CACHE_KEY, JSON.stringify(migratedData));
-    if (needsSave) {
-      saveToAPI(uuid, migratedData);
+    if (result.success && result.data) {
+      const { tasks, links } = result.data as UserData;
+      set(tasksAtom, tasks);
+      set(linksAtom, links);
+      localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(tasks));
+      localStorage.setItem(LINKS_CACHE_KEY, JSON.stringify(links));
     }
-  } else {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) {
-      try {
-        const cachedData = JSON.parse(cached);
-        const { data: migratedData } = migrateData(cachedData);
-        set(userDataAtom, migratedData);
-      } catch {
-        set(userDataAtom, createEmptyData());
-      }
-    } else {
-      set(userDataAtom, createEmptyData());
-    }
+  } catch (error) {
+    const cachedTasks = localStorage.getItem(TASKS_CACHE_KEY);
+    const cachedLinks = localStorage.getItem(LINKS_CACHE_KEY);
+    if (cachedTasks) set(tasksAtom, JSON.parse(cachedTasks));
+    if (cachedLinks) set(linksAtom, JSON.parse(cachedLinks));
   }
 
   set(loadingAtom, false);
 });
 
-export const syncFromServerAtom = atom(null, async (get, set) => {
+export const fetchTasksAtom = atom(null, async (get, set) => {
   const uuid = get(uuidAtom);
   if (!uuid) return;
 
-  const serverData = await forceFetchFromServer(uuid);
+  try {
+    const response = await fetch(`${API_URL}/api/tasks`, {
+      headers: getAuthHeaders(uuid),
+    });
+    const result = await response.json();
 
-  if (serverData) {
-    const { data: migratedData, needsSave } = migrateData(serverData);
-    set(userDataAtom, migratedData);
-    localStorage.setItem(CACHE_KEY, JSON.stringify(migratedData));
-    if (needsSave) {
-      saveToAPI(uuid, migratedData);
+    if (result.success && result.data) {
+      set(tasksAtom, result.data);
+      localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(result.data));
     }
+  } catch (error) {
+    console.error("Failed to fetch tasks:", error);
   }
 });
 
-export const setupVisibilityListenerAtom = atom(null, (get, set) => {
-  const syncFromServer = async () => {
-    const uuid = get(uuidAtom);
-    if (!uuid) return;
+export const fetchLinksAtom = atom(null, async (get, set) => {
+  const uuid = get(uuidAtom);
+  if (!uuid) return;
 
-    const serverData = await forceFetchFromServer(uuid);
-    if (serverData) {
-      set(userDataAtom, serverData);
-      localStorage.setItem(CACHE_KEY, JSON.stringify(serverData));
+  try {
+    const response = await fetch(`${API_URL}/api/links`, {
+      headers: getAuthHeaders(uuid),
+    });
+    const result = await response.json();
+
+    if (result.success && result.data) {
+      set(linksAtom, result.data);
+      localStorage.setItem(LINKS_CACHE_KEY, JSON.stringify(result.data));
     }
-  };
-
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === "visible") {
-      syncFromServer();
-    }
-  };
-
-  document.removeEventListener("visibilitychange", handleVisibilityChange);
-  document.addEventListener("visibilitychange", handleVisibilityChange);
+  } catch (error) {
+    console.error("Failed to fetch links:", error);
+  }
 });
 
-export const addTaskAtom = atom(null, (get, set, partial: Partial<Task>) => {
+const POLL_INTERVAL = 30000;
+let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+export const startPollingAtom = atom(null, (get, set) => {
+  if (pollInterval) return;
+
+  const poll = () => {
+    const activePage = get(activePageAtom);
+    if (activePage === "links") {
+      set(fetchLinksAtom);
+    } else {
+      set(fetchTasksAtom);
+    }
+  };
+
+  pollInterval = setInterval(poll, POLL_INTERVAL);
+});
+
+export const stopPollingAtom = atom(null, () => {
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+});
+
+export const addTaskAtom = atom(null, async (get, set, partial: Partial<Task>) => {
   const uuid = get(uuidAtom);
-  const data = get(userDataAtom);
-  if (!data) return null;
+  const tasks = get(tasksAtom);
+  if (!uuid) return null;
 
   const now = Date.now();
   const newTask: Task = {
@@ -182,67 +144,84 @@ export const addTaskAtom = atom(null, (get, set, partial: Partial<Task>) => {
     ...partial,
   };
 
-  const newData = {
-    ...data,
-    tasks: [...data.tasks, newTask],
-    updatedAt: now,
-  };
-  set(userDataAtom, newData);
-  saveData(uuid, newData);
+  const newTasks = [...tasks, newTask];
+  set(tasksAtom, newTasks);
+  localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(newTasks));
+
+  try {
+    await fetch(`${API_URL}/api/tasks`, {
+      method: "POST",
+      headers: getAuthHeaders(uuid),
+      body: JSON.stringify(newTask),
+    });
+  } catch (error) {
+    console.error("Failed to add task:", error);
+  }
+
   return newTask;
 });
 
-export const updateTaskAtom = atom(null, (get, set, id: string, updates: Partial<Task>) => {
+export const updateTaskAtom = atom(null, async (get, set, id: string, updates: Partial<Task>) => {
   const uuid = get(uuidAtom);
-  const data = get(userDataAtom);
-  if (!data) return;
+  const tasks = get(tasksAtom);
+  if (!uuid) return;
 
   const now = Date.now();
-  const newData = {
-    ...data,
-    tasks: data.tasks.map((t) =>
-      t.id === id ? { ...t, ...updates, updatedAt: now } : t
-    ),
-    updatedAt: now,
-  };
-  set(userDataAtom, newData);
-  saveData(uuid, newData);
+  const newTasks = tasks.map((t) =>
+    t.id === id ? { ...t, ...updates, updatedAt: now } : t
+  );
+  set(tasksAtom, newTasks);
+  localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(newTasks));
+
+  try {
+    await fetch(`${API_URL}/api/tasks/${id}`, {
+      method: "PUT",
+      headers: getAuthHeaders(uuid),
+      body: JSON.stringify(updates),
+    });
+  } catch (error) {
+    console.error("Failed to update task:", error);
+  }
 });
 
-export const deleteTaskAtom = atom(null, (get, set, id: string) => {
+export const deleteTaskAtom = atom(null, async (get, set, id: string) => {
   const uuid = get(uuidAtom);
-  const data = get(userDataAtom);
-  if (!data) return;
+  const tasks = get(tasksAtom);
+  if (!uuid) return;
 
-  const now = Date.now();
-  const newData = {
-    ...data,
-    tasks: data.tasks.filter((t) => t.id !== id),
-    updatedAt: now,
-  };
-  set(userDataAtom, newData);
-  saveData(uuid, newData);
+  const newTasks = tasks.filter((t) => t.id !== id);
+  set(tasksAtom, newTasks);
+  localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(newTasks));
+
+  try {
+    await fetch(`${API_URL}/api/tasks/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(uuid),
+    });
+  } catch (error) {
+    console.error("Failed to delete task:", error);
+  }
 });
 
 export const moveTaskAtom = atom(
   null,
-  (get, set, taskId: string, updates: Partial<Task>, newIndex: number, groupKey: keyof Task, groupValue: string | null) => {
+  async (get, set, taskId: string, updates: Partial<Task>, newIndex: number, groupKey: keyof Task, groupValue: string | null) => {
     const uuid = get(uuidAtom);
-    const data = get(userDataAtom);
-    if (!data) return;
+    const tasks = get(tasksAtom);
+    if (!uuid) return;
 
-    const taskToMove = data.tasks.find((t) => t.id === taskId);
+    const taskToMove = tasks.find((t) => t.id === taskId);
     if (!taskToMove) return;
 
     const now = Date.now();
     const updatedTask = { ...taskToMove, ...updates, updatedAt: now };
 
-    const targetGroupTasks = data.tasks.filter((t) => {
+    const targetGroupTasks = tasks.filter((t) => {
       if (t.id === taskId) return false;
       return groupValue === null ? !t[groupKey] : t[groupKey] === groupValue;
     });
 
-    const otherTasks = data.tasks.filter((t) => {
+    const otherTasks = tasks.filter((t) => {
       if (t.id === taskId) return false;
       return groupValue === null ? !!t[groupKey] : t[groupKey] !== groupValue;
     });
@@ -250,20 +229,34 @@ export const moveTaskAtom = atom(
     const clampedIndex = Math.max(0, Math.min(newIndex, targetGroupTasks.length));
     targetGroupTasks.splice(clampedIndex, 0, updatedTask);
 
-    const newData = {
-      ...data,
-      tasks: [...otherTasks, ...targetGroupTasks],
-      updatedAt: now,
-    };
-    set(userDataAtom, newData);
-    saveData(uuid, newData);
+    const newTasks = [...otherTasks, ...targetGroupTasks];
+    set(tasksAtom, newTasks);
+    localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(newTasks));
+
+    try {
+      if (Object.keys(updates).length > 0) {
+        await fetch(`${API_URL}/api/tasks/${taskId}`, {
+          method: "PUT",
+          headers: getAuthHeaders(uuid),
+          body: JSON.stringify(updates),
+        });
+      }
+
+      await fetch(`${API_URL}/api/tasks/reorder`, {
+        method: "PUT",
+        headers: getAuthHeaders(uuid),
+        body: JSON.stringify({ taskIds: newTasks.map((t) => t.id) }),
+      });
+    } catch (error) {
+      console.error("Failed to move task:", error);
+    }
   }
 );
 
-export const addLinkAtom = atom(null, (get, set, link: Omit<Link, "id" | "createdAt">) => {
+export const addLinkAtom = atom(null, async (get, set, link: Omit<Link, "id" | "createdAt">) => {
   const uuid = get(uuidAtom);
-  const data = get(userDataAtom);
-  if (!data) return;
+  const links = get(linksAtom);
+  if (!uuid) return;
 
   const now = Date.now();
   const newLink: Link = {
@@ -272,56 +265,73 @@ export const addLinkAtom = atom(null, (get, set, link: Omit<Link, "id" | "create
     createdAt: now,
   };
 
-  const newData = {
-    ...data,
-    links: [...data.links, newLink],
-    updatedAt: now,
-  };
-  set(userDataAtom, newData);
-  saveData(uuid, newData);
+  const newLinks = [...links, newLink];
+  set(linksAtom, newLinks);
+  localStorage.setItem(LINKS_CACHE_KEY, JSON.stringify(newLinks));
+
+  try {
+    await fetch(`${API_URL}/api/links`, {
+      method: "POST",
+      headers: getAuthHeaders(uuid),
+      body: JSON.stringify(newLink),
+    });
+  } catch (error) {
+    console.error("Failed to add link:", error);
+  }
 });
 
-export const deleteLinkAtom = atom(null, (get, set, id: string) => {
+export const deleteLinkAtom = atom(null, async (get, set, id: string) => {
   const uuid = get(uuidAtom);
-  const data = get(userDataAtom);
-  if (!data) return;
+  const links = get(linksAtom);
+  if (!uuid) return;
 
-  const now = Date.now();
-  const newData = {
-    ...data,
-    links: data.links.filter((l) => l.id !== id),
-    updatedAt: now,
-  };
-  set(userDataAtom, newData);
-  saveData(uuid, newData);
+  const newLinks = links.filter((l) => l.id !== id);
+  set(linksAtom, newLinks);
+  localStorage.setItem(LINKS_CACHE_KEY, JSON.stringify(newLinks));
+
+  try {
+    await fetch(`${API_URL}/api/links/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(uuid),
+    });
+  } catch (error) {
+    console.error("Failed to delete link:", error);
+  }
 });
 
-export const reorderLinksAtom = atom(null, (get, set, linkIds: string[]) => {
+export const reorderLinksAtom = atom(null, async (get, set, linkIds: string[]) => {
   const uuid = get(uuidAtom);
-  const data = get(userDataAtom);
-  if (!data) return;
+  const links = get(linksAtom);
+  if (!uuid) return;
 
-  const linkMap = new Map(data.links.map((l) => [l.id, l]));
+  const linkMap = new Map(links.map((l) => [l.id, l]));
   const reorderedLinks = linkIds
     .map((id) => linkMap.get(id))
     .filter((l): l is Link => l !== undefined);
-  const remainingLinks = data.links.filter((l) => !linkIds.includes(l.id));
+  const remainingLinks = links.filter((l) => !linkIds.includes(l.id));
 
-  const now = Date.now();
-  const newData = {
-    ...data,
-    links: [...reorderedLinks, ...remainingLinks],
-    updatedAt: now,
-  };
-  set(userDataAtom, newData);
-  saveData(uuid, newData);
+  const newLinks = [...reorderedLinks, ...remainingLinks];
+  set(linksAtom, newLinks);
+  localStorage.setItem(LINKS_CACHE_KEY, JSON.stringify(newLinks));
+
+  try {
+    await fetch(`${API_URL}/api/links/reorder`, {
+      method: "PUT",
+      headers: getAuthHeaders(uuid),
+      body: JSON.stringify({ linkIds }),
+    });
+  } catch (error) {
+    console.error("Failed to reorder links:", error);
+  }
 });
 
 export const logoutAtom = atom(null, (_get, set) => {
   localStorage.removeItem("uuid");
-  localStorage.removeItem(CACHE_KEY);
+  localStorage.removeItem(TASKS_CACHE_KEY);
+  localStorage.removeItem(LINKS_CACHE_KEY);
   set(uuidAtom, null);
-  set(userDataAtom, null);
+  set(tasksAtom, []);
+  set(linksAtom, []);
 });
 
 export const deleteAccountAtom = atom(null, async (get, set) => {
@@ -329,13 +339,9 @@ export const deleteAccountAtom = atom(null, async (get, set) => {
   if (!uuid) return;
 
   try {
-    await fetch(`${API_URL}/api/data`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${uuid}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ tasks: [], links: [], deleted: true }),
+    await fetch(`${API_URL}/api/account`, {
+      method: "DELETE",
+      headers: getAuthHeaders(uuid),
     });
   } catch (error) {
     console.error("Failed to delete account:", error);
@@ -346,10 +352,9 @@ export const deleteAccountAtom = atom(null, async (get, set) => {
 
 export const importDataAtom = atom(
   null,
-  (get, set, jsonString: string): { success: boolean; error?: string; tasksImported?: number; linksImported?: number } => {
+  async (get, set, jsonString: string): Promise<{ success: boolean; error?: string; tasksImported?: number; linksImported?: number }> => {
     const uuid = get(uuidAtom);
-    const data = get(userDataAtom);
-    if (!data) return { success: false, error: "No data context" };
+    if (!uuid) return { success: false, error: "No user context" };
 
     try {
       const imported = JSON.parse(jsonString);
@@ -372,16 +377,26 @@ export const importDataAtom = atom(
           )
         : [];
 
-      const now = Date.now();
-      const newData: UserData = {
-        tasks,
-        links,
-        createdAt: data.createdAt,
-        updatedAt: now,
-      };
+      for (const task of tasks) {
+        await fetch(`${API_URL}/api/tasks`, {
+          method: "POST",
+          headers: getAuthHeaders(uuid),
+          body: JSON.stringify(task),
+        });
+      }
 
-      set(userDataAtom, newData);
-      saveData(uuid, newData);
+      for (const link of links) {
+        await fetch(`${API_URL}/api/links`, {
+          method: "POST",
+          headers: getAuthHeaders(uuid),
+          body: JSON.stringify(link),
+        });
+      }
+
+      set(tasksAtom, tasks);
+      set(linksAtom, links);
+      localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(tasks));
+      localStorage.setItem(LINKS_CACHE_KEY, JSON.stringify(links));
 
       return {
         success: true,
@@ -400,6 +415,6 @@ export const generateUUID = (): string => {
 
 export const isValidUUID = (uuid: string): boolean => {
   const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(uuid);
 };

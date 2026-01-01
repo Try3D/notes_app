@@ -1,10 +1,22 @@
+import { useEffect } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
+import { useSetAtom } from "jotai";
 import { useTheme } from "../context/ThemeContext";
+import { activePageAtom } from "../store";
 
 export default function Layout() {
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
   const isKanban = location.pathname === "/kanban";
+  const setActivePage = useSetAtom(activePageAtom);
+
+  useEffect(() => {
+    if (location.pathname === "/links") {
+      setActivePage("links");
+    } else {
+      setActivePage("tasks");
+    }
+  }, [location.pathname, setActivePage]);
 
   return (
     <>
