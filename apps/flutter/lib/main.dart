@@ -80,7 +80,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Initialize data provider with UUID
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthProvider>();
       final data = context.read<DataProvider>();
@@ -99,14 +98,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final data = context.read<DataProvider>();
     switch (state) {
       case AppLifecycleState.resumed:
-        // App came to foreground - start polling and fetch latest data
         data.onAppResumed();
         break;
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
       case AppLifecycleState.detached:
       case AppLifecycleState.hidden:
-        // App went to background - stop polling
         data.onAppPaused();
         break;
     }

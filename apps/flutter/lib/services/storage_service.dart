@@ -16,19 +16,16 @@ class StorageService {
     return StorageService(prefs);
   }
 
-  // UUID
   String? getUUID() => _prefs.getString(_uuidKey);
-  
+
   Future<bool> setUUID(String uuid) => _prefs.setString(_uuidKey, uuid);
-  
+
   Future<bool> clearUUID() => _prefs.remove(_uuidKey);
 
-  // Theme
   bool isDarkMode() => _prefs.getBool(_themeKey) ?? false;
-  
+
   Future<bool> setDarkMode(bool value) => _prefs.setBool(_themeKey, value);
 
-  // Data cache
   UserData? getCachedData() {
     final json = _prefs.getString(_dataKey);
     if (json == null) return null;

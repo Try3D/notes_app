@@ -1,7 +1,5 @@
-// API_BASE is loaded via importScripts in service worker
 importScripts('config.js');
 
-// Utility functions
 function generateUUID() {
   return crypto.randomUUID();
 }
@@ -20,7 +18,6 @@ function linkExists(links, url) {
   return links.some(link => link.url === url);
 }
 
-// Storage functions
 async function getStoredUuid() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['uuid'], (result) => {
@@ -29,7 +26,6 @@ async function getStoredUuid() {
   });
 }
 
-// API functions
 async function fetchUserData(uuid) {
   const response = await fetch(`${API_BASE}/api/data`, {
     headers: { 'Authorization': `Bearer ${uuid}` },
@@ -49,31 +45,24 @@ async function saveUserData(uuid, data) {
   return response.json();
 }
 
-// Show notification badge on extension icon
 function showBadge(text, color) {
   chrome.action.setBadgeText({ text });
   chrome.action.setBadgeBackgroundColor({ color });
 
-  // Clear badge after 2 seconds
   setTimeout(() => {
     chrome.action.setBadgeText({ text: '' });
   }, 2000);
 }
 
-// Save current tab as bookmark
 async function saveCurrentTab() {
   try {
-    // Get stored UUID
     const uuid = await getStoredUuid();
 
     if (!uuid) {
-      // Not logged in - show popup for login
-      // We can't programmatically open the popup, so just show a badge
       showBadge('!', '#dc2626');
       return;
     }
 
-    // Get current tab
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
     if (!tab || !tab.url) {
@@ -81,13 +70,11 @@ async function saveCurrentTab() {
       return;
     }
 
-    // Don't allow bookmarking chrome:// pages, etc.
     if (!tab.url.startsWith('http://') && !tab.url.startsWith('https://')) {
       showBadge('!', '#dc2626');
       return;
     }
 
-    // Fetch current data
     const result = await fetchUserData(uuid);
     if (!result.success) {
       showBadge('!', '#dc2626');
@@ -96,13 +83,11 @@ async function saveCurrentTab() {
 
     const userData = result.data;
 
-    // Check if already bookmarked
     if (linkExists(userData.links, tab.url)) {
-      showBadge('=', '#f59e0b'); // Already exists
+      showBadge('=', '#f59e0b');
       return;
     }
 
-    // Create new link
     const urlObj = new URL(tab.url);
     const favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
     const title = tab.title || urlObj.hostname;
@@ -111,12 +96,11 @@ async function saveCurrentTab() {
     userData.links.push(newLink);
     userData.updatedAt = Date.now();
 
-    // Save data
     const saveResult = await saveUserData(uuid, userData);
     if (saveResult.success) {
-      showBadge('OK', '#22c55e'); // Success
+      showBadge('OK', '#22c55e');
     } else {
-      showBadge('!', '#dc2626'); // Error
+      showBadge('!', '#dc2626');
     }
 
   } catch (error) {
@@ -125,7 +109,6 @@ async function saveCurrentTab() {
   }
 }
 
-// Listen for keyboard shortcut command
 chrome.commands.onCommand.addListener((command) => {
   if (command === 'save-bookmark') {
     saveCurrentTab();

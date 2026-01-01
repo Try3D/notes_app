@@ -28,7 +28,6 @@ function App() {
     fetchData()
   }, [uuid, fetchData])
 
-  // Start/stop polling based on auth state
   useEffect(() => {
     if (uuid) {
       startPolling()

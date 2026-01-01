@@ -1,8 +1,4 @@
-// API_BASE is loaded from config.js
-
-// DOM Elements
 const elements = {
-  // Views
   mainView: document.getElementById('mainView'),
   generateView: document.getElementById('generateView'),
   enterView: document.getElementById('enterView'),
@@ -11,12 +7,10 @@ const elements = {
   settingsView: document.getElementById('settingsView'),
   loadingOverlay: document.getElementById('loadingOverlay'),
 
-  // Main view
   settingsBtn: document.getElementById('settingsBtn'),
   generateBtn: document.getElementById('generateBtn'),
   haveCodeBtn: document.getElementById('haveCodeBtn'),
 
-  // Generate view
   generatedCode: document.getElementById('generatedCode'),
   copyBtn: document.getElementById('copyBtn'),
   copyIcon: document.getElementById('copyIcon'),
@@ -25,23 +19,19 @@ const elements = {
   continueBtn: document.getElementById('continueBtn'),
   backFromGenerate: document.getElementById('backFromGenerate'),
 
-  // Enter view
   codeInput: document.getElementById('codeInput'),
   loginError: document.getElementById('loginError'),
   loginBtn: document.getElementById('loginBtn'),
   backFromEnter: document.getElementById('backFromEnter'),
 
-  // Bookmark view
   pageFavicon: document.getElementById('pageFavicon'),
   pageTitle: document.getElementById('pageTitle'),
   pageUrl: document.getElementById('pageUrl'),
   saveBtn: document.getElementById('saveBtn'),
 
-  // Status view
   statusIcon: document.getElementById('statusIcon'),
   statusText: document.getElementById('statusText'),
 
-  // Settings view
   currentUuid: document.getElementById('currentUuid'),
   toggleUuidBtn: document.getElementById('toggleUuidBtn'),
   eyeIcon: document.getElementById('eyeIcon'),
@@ -55,7 +45,6 @@ const elements = {
   themeBtnMoonIcon: document.getElementById('themeBtnMoonIcon'),
 };
 
-// State
 let state = {
   uuid: null,
   userData: null,
@@ -65,7 +54,6 @@ let state = {
   darkMode: false,
 };
 
-// Utility functions
 function generateUUID() {
   return crypto.randomUUID();
 }
@@ -76,20 +64,17 @@ function isValidUUID(uuid) {
 }
 
 function showView(viewName) {
-  // Hide all views
   Object.keys(elements).forEach(key => {
     if (key.endsWith('View') && elements[key]) {
       elements[key].classList.add('hidden');
     }
   });
 
-  // Show requested view
   const view = elements[viewName + 'View'];
   if (view) {
     view.classList.remove('hidden');
   }
 
-  // Hide entire header when in settings view (settings has its own header)
   const header = document.querySelector('.header');
   if (viewName === 'settings') {
     header.classList.add('hidden');
@@ -111,7 +96,6 @@ function showStatus(type, message) {
 
   elements.statusIcon.className = 'status-icon ' + type;
 
-  // Set icon based on type
   let iconSvg = '';
   switch (type) {
     case 'success':
@@ -131,7 +115,6 @@ function showStatus(type, message) {
   elements.statusText.textContent = message;
 }
 
-// API functions
 async function checkUuidExists(uuid) {
   const response = await fetch(`${API_BASE}/api/exists/${uuid}`);
   const result = await response.json();
@@ -166,7 +149,6 @@ async function saveUserData(uuid, data) {
   return response.json();
 }
 
-// Storage functions
 async function getStoredUuid() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['uuid'], (result) => {
@@ -188,7 +170,6 @@ async function clearStoredUuid() {
 }
 
 function maskUuid(uuid) {
-  // Fully hide - just show dots
   return '••••••••••••••••••••••••••••••••••••';
 }
 
@@ -206,7 +187,6 @@ function updateUuidDisplay() {
   }
 }
 
-// Theme functions
 function applyTheme() {
   if (state.darkMode) {
     document.body.classList.add('dark');
@@ -237,13 +217,11 @@ async function loadTheme() {
   });
 }
 
-// Tab functions
 async function getCurrentTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return tab;
 }
 
-// Bookmark functions
 function createLink(url, title, favicon) {
   return {
     id: generateUUID(),
@@ -264,7 +242,6 @@ async function saveBookmark() {
   showStatus('loading', 'Saving...');
 
   try {
-    // Fetch current data
     const result = await fetchUserData(state.uuid);
     if (!result.success) {
       throw new Error('Failed to fetch data');
@@ -273,14 +250,12 @@ async function saveBookmark() {
     const userData = result.data;
     const url = state.currentTab.url;
 
-    // Check if already bookmarked
     if (linkExists(userData.links, url)) {
       showStatus('exists', 'Already bookmarked');
       setTimeout(() => window.close(), 1000);
       return;
     }
 
-    // Create new link
     const urlObj = new URL(url);
     const favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
     const title = state.currentTab.title || urlObj.hostname;
@@ -289,7 +264,6 @@ async function saveBookmark() {
     userData.links.push(newLink);
     userData.updatedAt = Date.now();
 
-    // Save data
     const saveResult = await saveUserData(state.uuid, userData);
     if (!saveResult.success) {
       throw new Error('Failed to save');
@@ -304,9 +278,7 @@ async function saveBookmark() {
   }
 }
 
-// Event handlers
 function setupEventListeners() {
-  // Settings button
   elements.settingsBtn.addEventListener('click', () => {
     if (state.uuid) {
       state.uuidVisible = false;
@@ -318,7 +290,6 @@ function setupEventListeners() {
     }
   });
 
-  // Main view
   elements.generateBtn.addEventListener('click', () => {
     state.generatedUuid = generateUUID();
     elements.generatedCode.textContent = state.generatedUuid;
@@ -333,7 +304,6 @@ function setupEventListeners() {
     showView('enter');
   });
 
-  // Generate view
   elements.copyBtn.addEventListener('click', async () => {
     await navigator.clipboard.writeText(state.generatedUuid);
     elements.copyIcon.classList.add('hidden');
@@ -376,7 +346,6 @@ function setupEventListeners() {
     showView('main');
   });
 
-  // Enter view
   elements.loginBtn.addEventListener('click', handleLogin);
 
   elements.codeInput.addEventListener('keydown', (e) => {
@@ -389,40 +358,33 @@ function setupEventListeners() {
     showView('main');
   });
 
-  // Bookmark view
   elements.saveBtn.addEventListener('click', saveBookmark);
 
-  // Enter key to save bookmark
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !elements.bookmarkView.classList.contains('hidden')) {
       saveBookmark();
     }
   });
 
-  // Settings view - back button
   elements.backFromSettings.addEventListener('click', async () => {
     await initBookmarkView();
   });
 
-  // Settings view - UUID visibility toggle
   elements.toggleUuidBtn.addEventListener('click', () => {
     state.uuidVisible = !state.uuidVisible;
     updateUuidDisplay();
   });
 
-  // Settings view - copy UUID
   elements.copyUuidBtn.addEventListener('click', async () => {
     await navigator.clipboard.writeText(state.uuid);
   });
 
-  // Settings view - theme toggle
   elements.themeToggleBtn.addEventListener('click', () => {
     state.darkMode = !state.darkMode;
     applyTheme();
     saveTheme();
   });
 
-  // Settings view - logout
   elements.logoutBtn.addEventListener('click', async () => {
     await clearStoredUuid();
     state.uuid = null;
@@ -447,7 +409,6 @@ async function handleLogin() {
     const exists = await checkUuidExists(code);
 
     if (!exists) {
-      // Register new UUID
       await registerUuid(code);
     }
 
@@ -472,7 +433,6 @@ async function initBookmarkView() {
       return;
     }
 
-    // Don't allow bookmarking chrome:// pages, etc.
     if (!state.currentTab.url.startsWith('http://') && !state.currentTab.url.startsWith('https://')) {
       showStatus('error', 'Cannot bookmark this page');
       return;
@@ -492,24 +452,18 @@ async function initBookmarkView() {
   }
 }
 
-// Initialize
 async function init() {
   setupEventListeners();
 
-  // Load theme
   await loadTheme();
 
-  // Check if user is already logged in
   state.uuid = await getStoredUuid();
 
   if (state.uuid) {
-    // Already logged in, show bookmark view
     await initBookmarkView();
   } else {
-    // Not logged in, show main view
     showView('main');
   }
 }
 
-// Start the extension
 init();

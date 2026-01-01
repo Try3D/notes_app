@@ -28,7 +28,6 @@ export default function Kanban() {
 
   const getTasksByColumn = (column: KanbanColumn | null) => {
     if (column === null) {
-      // For unassigned, include tasks with kanban === null OR kanban === undefined
       return tasks.filter((t) => !t.kanban);
     }
     return tasks.filter((t) => t.kanban === column);

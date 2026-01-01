@@ -24,7 +24,6 @@ export default function TaskDrawer({ task, onClose, onUpdate, onDelete, showQuad
 
   useEffect(() => {
     if (task) {
-      // Only update form fields and focus when opening a different task
       if (prevTaskIdRef.current !== task.id) {
         setTitle(task.title)
         setNote(task.note)

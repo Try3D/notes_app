@@ -43,8 +43,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     final jsonStr = const JsonEncoder.withIndent('  ').convert(exportData);
 
-    // For mobile, we'd use share or file picker
-    // For simplicity, copying to clipboard
     Clipboard.setData(ClipboardData(text: jsonStr));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -60,8 +58,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _handleImport() async {
-    // For simplicity, using clipboard
-    // In a real app, you'd use file_picker package
     final clipboardData = await Clipboard.getData('text/plain');
     if (clipboardData?.text == null) {
       setState(() {

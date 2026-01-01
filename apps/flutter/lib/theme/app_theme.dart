@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 const String _fontFamily = 'ShortStack';
 
 class AppColors {
-  // Light theme
   static const Color lightBg = Color(0xFFFDF7F1);
   static const Color lightCard = Color(0xFFFFFFFF);
   static const Color lightBorder = Color(0xFF3C3C3C);
@@ -13,7 +12,6 @@ class AppColors {
   static const Color lightTaskBg = Color(0xFFFEFCFA);
   static const Color lightTaskBgAlt = Color(0xFFFDF7F1);
 
-  // Dark theme
   static const Color darkBg = Color(0xFF1A1A1A);
   static const Color darkCard = Color(0xFF252525);
   static const Color darkBorder = Color(0xFFE0E0E0);
@@ -23,7 +21,6 @@ class AppColors {
   static const Color darkTaskBg = Color(0xFF252525);
   static const Color darkTaskBgAlt = Color(0xFF2A2A2A);
 
-  // Accent colors
   static const Color red = Color(0xFFEF4444);
   static const Color green = Color(0xFF22C55E);
   static const Color orange = Color(0xFFF97316);
@@ -37,7 +34,16 @@ class AppColors {
   static const Color danger = Color(0xFFDC2626);
 
   static const List<Color> taskColors = [
-    red, green, orange, blue, purple, pink, teal, yellow, gray, dark
+    red,
+    green,
+    orange,
+    blue,
+    purple,
+    pink,
+    teal,
+    yellow,
+    gray,
+    dark,
   ];
 
   static const Map<String, Color> colorMap = {
@@ -225,7 +231,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(2),
           borderSide: const BorderSide(color: AppColors.blue, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 14,
+        ),
         hintStyle: const TextStyle(
           fontFamily: _fontFamily,
           color: AppColors.lightMuted,
@@ -253,9 +262,7 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.lightText,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(2),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
           side: const BorderSide(color: AppColors.lightBorder, width: 2),
           textStyle: const TextStyle(
             fontFamily: _fontFamily,
@@ -347,7 +354,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(2),
           borderSide: const BorderSide(color: AppColors.blue, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 14,
+        ),
         hintStyle: const TextStyle(
           fontFamily: _fontFamily,
           color: AppColors.darkMuted,
@@ -375,9 +385,7 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.darkText,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(2),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
           side: const BorderSide(color: AppColors.darkBorder, width: 2),
           textStyle: const TextStyle(
             fontFamily: _fontFamily,
@@ -419,16 +427,18 @@ class AppTheme {
   }
 }
 
-// Extension for easy access to custom colors based on theme
 extension ThemeColors on BuildContext {
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
-  
+
   Color get bgColor => isDark ? AppColors.darkBg : AppColors.lightBg;
   Color get cardColor => isDark ? AppColors.darkCard : AppColors.lightCard;
-  Color get borderColor => isDark ? AppColors.darkBorder : AppColors.lightBorder;
+  Color get borderColor =>
+      isDark ? AppColors.darkBorder : AppColors.lightBorder;
   Color get textColor => isDark ? AppColors.darkText : AppColors.lightText;
   Color get mutedColor => isDark ? AppColors.darkMuted : AppColors.lightMuted;
   Color get hoverColor => isDark ? AppColors.darkHover : AppColors.lightHover;
-  Color get taskBgColor => isDark ? AppColors.darkTaskBg : AppColors.lightTaskBg;
-  Color get taskBgAltColor => isDark ? AppColors.darkTaskBgAlt : AppColors.lightTaskBgAlt;
+  Color get taskBgColor =>
+      isDark ? AppColors.darkTaskBg : AppColors.lightTaskBg;
+  Color get taskBgAltColor =>
+      isDark ? AppColors.darkTaskBgAlt : AppColors.lightTaskBgAlt;
 }

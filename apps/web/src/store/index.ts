@@ -3,18 +3,15 @@ import type { Task, Link, UserData } from "@eisenhower/shared";
 import { API_URL } from "../config";
 
 const CACHE_KEY = "eisenhower_data";
-const POLL_INTERVAL = 30000; // 30 seconds
+const POLL_INTERVAL = 30000;
 
-// Base atoms
 export const uuidAtom = atom<string | null>(localStorage.getItem("uuid"));
 export const loadingAtom = atom(true);
 export const userDataAtom = atom<UserData | null>(null);
 
-// Derived atoms
 export const tasksAtom = atom((get) => get(userDataAtom)?.tasks ?? []);
 export const linksAtom = atom((get) => get(userDataAtom)?.links ?? []);
 
-// Auth actions
 export const setUuidAtom = atom(null, (_get, set, uuid: string | null) => {
   if (uuid) {
     localStorage.setItem("uuid", uuid);
@@ -25,7 +22,6 @@ export const setUuidAtom = atom(null, (_get, set, uuid: string | null) => {
   set(uuidAtom, uuid);
 });
 
-// Data sync - immediate, no debounce
 const saveToAPI = async (uuid: string, data: UserData) => {
   try {
     await fetch(`${API_URL}/api/data`, {
@@ -46,10 +42,8 @@ const saveData = (uuid: string | null, data: UserData) => {
   if (uuid) saveToAPI(uuid, data);
 };
 
-// Force fetch from server - always overwrites local data
 const forceFetchFromServer = async (uuid: string): Promise<UserData | null> => {
   try {
-    // Add timestamp to bust any caching
     const response = await fetch(`${API_URL}/api/data?_t=${Date.now()}`, {
       headers: {
         Authorization: `Bearer ${uuid}`,
@@ -72,13 +66,11 @@ function createEmptyData(): UserData {
   return { tasks: [], links: [], createdAt: now, updatedAt: now };
 }
 
-// Migrate/normalize task data - ensures all tasks have required fields
 function migrateData(data: UserData): { data: UserData; needsSave: boolean } {
   let needsSave = false;
   const now = Date.now();
 
   const migratedTasks = data.tasks.map((task) => {
-    // Check if task needs migration (missing kanban field or it's undefined)
     if (!("kanban" in task) || task.kanban === undefined) {
       needsSave = true;
       return { ...task, kanban: null, updatedAt: now };
@@ -96,7 +88,6 @@ function migrateData(data: UserData): { data: UserData; needsSave: boolean } {
   return { data, needsSave: false };
 }
 
-// Fetch data action - ALWAYS fetches from server (source of truth)
 export const fetchDataAtom = atom(null, async (get, set) => {
   const uuid = get(uuidAtom);
   if (!uuid) {
@@ -107,23 +98,16 @@ export const fetchDataAtom = atom(null, async (get, set) => {
 
   set(loadingAtom, true);
 
-  // Server is the source of truth - always fetch from server
   const serverData = await forceFetchFromServer(uuid);
 
   if (serverData) {
-    // Migrate data if needed (adds missing fields like kanban: null)
     const { data: migratedData, needsSave } = migrateData(serverData);
-
-    // Force update both state and localStorage
     set(userDataAtom, migratedData);
     localStorage.setItem(CACHE_KEY, JSON.stringify(migratedData));
-
-    // If migration occurred, save back to server
     if (needsSave) {
       saveToAPI(uuid, migratedData);
     }
   } else {
-    // Only fallback to cache if server is unreachable
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
       try {
@@ -141,7 +125,6 @@ export const fetchDataAtom = atom(null, async (get, set) => {
   set(loadingAtom, false);
 });
 
-// Sync action - for polling (also forces server data)
 export const syncFromServerAtom = atom(null, async (get, set) => {
   const uuid = get(uuidAtom);
   if (!uuid) return;
@@ -149,34 +132,26 @@ export const syncFromServerAtom = atom(null, async (get, set) => {
   const serverData = await forceFetchFromServer(uuid);
 
   if (serverData) {
-    // Migrate data if needed
     const { data: migratedData, needsSave } = migrateData(serverData);
-
-    // Force update both state and localStorage
     set(userDataAtom, migratedData);
     localStorage.setItem(CACHE_KEY, JSON.stringify(migratedData));
-
-    // If migration occurred, save back to server
     if (needsSave) {
       saveToAPI(uuid, migratedData);
     }
   }
 });
 
-// Polling
 let pollInterval: number | null = null;
 
 export const startPollingAtom = atom(null, (get, set) => {
   const uuid = get(uuidAtom);
   if (!uuid) return;
 
-  // Stop any existing polling
   if (pollInterval) {
     clearInterval(pollInterval);
     pollInterval = null;
   }
 
-  // Sync function
   const syncFromServer = async () => {
     const serverData = await forceFetchFromServer(uuid);
     if (serverData) {
@@ -185,19 +160,15 @@ export const startPollingAtom = atom(null, (get, set) => {
     }
   };
 
-  // Start polling every 30 seconds
   pollInterval = window.setInterval(syncFromServer, POLL_INTERVAL);
 
-  // Handle visibility change - stop polling when tab is hidden, resume when visible
   const handleVisibilityChange = () => {
     if (document.visibilityState === "visible") {
-      // Tab is visible - resume polling and sync immediately
       if (!pollInterval) {
         pollInterval = window.setInterval(syncFromServer, POLL_INTERVAL);
       }
       syncFromServer();
     } else {
-      // Tab is hidden - stop polling
       if (pollInterval) {
         clearInterval(pollInterval);
         pollInterval = null;
@@ -205,7 +176,6 @@ export const startPollingAtom = atom(null, (get, set) => {
     }
   };
 
-  // Also sync on window focus
   const handleFocus = () => {
     if (!pollInterval) {
       pollInterval = window.setInterval(syncFromServer, POLL_INTERVAL);
@@ -226,7 +196,6 @@ export const stopPollingAtom = atom(null, () => {
   }
 });
 
-// Task actions
 export const addTaskAtom = atom(null, (get, set, partial: Partial<Task>) => {
   const uuid = get(uuidAtom);
   const data = get(userDataAtom);
@@ -302,19 +271,16 @@ export const moveTaskAtom = atom(
     const now = Date.now();
     const updatedTask = { ...taskToMove, ...updates, updatedAt: now };
 
-    // Get tasks in target group (excluding moved task)
     const targetGroupTasks = data.tasks.filter((t) => {
       if (t.id === taskId) return false;
       return groupValue === null ? !t[groupKey] : t[groupKey] === groupValue;
     });
 
-    // Get tasks not in target group (excluding moved task)
     const otherTasks = data.tasks.filter((t) => {
       if (t.id === taskId) return false;
       return groupValue === null ? !!t[groupKey] : t[groupKey] !== groupValue;
     });
 
-    // Insert at correct position
     const clampedIndex = Math.max(0, Math.min(newIndex, targetGroupTasks.length));
     targetGroupTasks.splice(clampedIndex, 0, updatedTask);
 
@@ -328,7 +294,6 @@ export const moveTaskAtom = atom(
   }
 );
 
-// Link actions
 export const addLinkAtom = atom(null, (get, set, link: Omit<Link, "id" | "createdAt">) => {
   const uuid = get(uuidAtom);
   const data = get(userDataAtom);
@@ -386,7 +351,6 @@ export const reorderLinksAtom = atom(null, (get, set, linkIds: string[]) => {
   saveData(uuid, newData);
 });
 
-// Logout action
 export const logoutAtom = atom(null, (_get, set) => {
   localStorage.removeItem("uuid");
   localStorage.removeItem(CACHE_KEY);
@@ -394,7 +358,6 @@ export const logoutAtom = atom(null, (_get, set) => {
   set(userDataAtom, null);
 });
 
-// Delete account action
 export const deleteAccountAtom = atom(null, async (get, set) => {
   const uuid = get(uuidAtom);
   if (!uuid) return;
@@ -415,7 +378,6 @@ export const deleteAccountAtom = atom(null, async (get, set) => {
   set(logoutAtom);
 });
 
-// Import data action
 export const importDataAtom = atom(
   null,
   (get, set, jsonString: string): { success: boolean; error?: string; tasksImported?: number; linksImported?: number } => {
@@ -466,12 +428,10 @@ export const importDataAtom = atom(
   }
 );
 
-// UUID generation utility
 export const generateUUID = (): string => {
   return crypto.randomUUID();
 };
 
-// UUID validation utility
 export const isValidUUID = (uuid: string): boolean => {
   const uuidRegex =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

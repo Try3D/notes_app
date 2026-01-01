@@ -14,7 +14,7 @@ class DataProvider extends ChangeNotifier {
   bool _isLoading = true;
   Timer? _pollTimer;
   bool _isPollingActive = false;
-  static const _pollInterval = Duration(seconds: 30); // 30 seconds
+  static const _pollInterval = Duration(seconds: 30);
 
   DataProvider(this._storage);
 
@@ -36,38 +36,32 @@ class DataProvider extends ChangeNotifier {
     }
   }
 
-  /// Start polling for data updates (call when app is active/resumed)
   void startPolling() {
     if (_isPollingActive || _uuid == null) return;
     _isPollingActive = true;
 
-    // Start periodic polling every 30 seconds
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(_pollInterval, (_) {
       _forceSyncFromServer();
     });
   }
 
-  /// Stop polling (call when app goes to background)
   void stopPolling() {
     _isPollingActive = false;
     _pollTimer?.cancel();
     _pollTimer = null;
   }
 
-  /// Called when app resumes from background - fetch latest data immediately
   void onAppResumed() {
     if (_uuid == null) return;
     startPolling();
     _forceSyncFromServer();
   }
 
-  /// Called when app goes to background
   void onAppPaused() {
     stopPolling();
   }
 
-  /// Force sync from server - server is source of truth, always overwrites local
   Future<void> _forceSyncFromServer() async {
     if (_uuid == null) return;
 
@@ -75,7 +69,6 @@ class DataProvider extends ChangeNotifier {
     final apiData = await api.fetchData();
 
     if (apiData != null) {
-      // Server is source of truth - always overwrite local data
       _data = apiData;
       await _storage.setCachedData(apiData);
       notifyListeners();
@@ -86,7 +79,6 @@ class DataProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    // Server is source of truth - fetch from API first
     if (_uuid != null) {
       final api = ApiService(uuid: _uuid);
       final apiData = await api.fetchData();
@@ -94,7 +86,6 @@ class DataProvider extends ChangeNotifier {
         _data = apiData;
         await _storage.setCachedData(apiData);
       } else {
-        // Only use cache if server is unreachable
         final cached = _storage.getCachedData();
         if (cached != null) {
           _data = cached;
@@ -112,7 +103,6 @@ class DataProvider extends ChangeNotifier {
     await _loadData();
   }
 
-  // Immediate sync to API - no debounce
   Future<void> _syncToAPI() async {
     if (_uuid == null || _data == null) return;
 
@@ -123,7 +113,6 @@ class DataProvider extends ChangeNotifier {
     await api.saveData(_data!);
   }
 
-  // Task operations
   Task addTask({
     String title = '',
     String note = '',
@@ -209,7 +198,6 @@ class DataProvider extends ChangeNotifier {
       }
     }
 
-    // Add any remaining tasks
     reordered.addAll(taskMap.values);
     _data!.tasks = reordered;
 
@@ -217,7 +205,6 @@ class DataProvider extends ChangeNotifier {
     _syncToAPI();
   }
 
-  // Link operations
   Link addLink({required String url, String title = '', String favicon = ''}) {
     final link = Link(
       id: const Uuid().v4(),
@@ -254,7 +241,6 @@ class DataProvider extends ChangeNotifier {
       }
     }
 
-    // Add any remaining links
     reordered.addAll(linkMap.values);
     _data!.links = reordered;
 
@@ -262,7 +248,6 @@ class DataProvider extends ChangeNotifier {
     _syncToAPI();
   }
 
-  // Import/Export
   Map<String, dynamic>? exportData() {
     if (_data == null) return null;
     return {..._data!.toJson(), 'exportedAt': DateTime.now().toIso8601String()};

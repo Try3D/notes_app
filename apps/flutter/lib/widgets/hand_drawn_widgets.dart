@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// A hand-drawn style card with thick borders
 class HandDrawnCard extends StatelessWidget {
   final Widget child;
   final Color? headerColor;
@@ -41,7 +40,9 @@ class HandDrawnCard extends StatelessWidget {
               ]
             : null,
       ),
-      transform: isDragOver ? Matrix4.diagonal3Values(1.01, 1.01, 1.0) : Matrix4.identity(),
+      transform: isDragOver
+          ? Matrix4.diagonal3Values(1.01, 1.01, 1.0)
+          : Matrix4.identity(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -60,33 +61,29 @@ class HandDrawnCard extends StatelessWidget {
                 children: [
                   Text(
                     headerTitle!,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(color: Colors.white),
                   ),
                   if (headerSubtitle != null) ...[
                     const SizedBox(height: 4),
                     Text(
                       headerSubtitle!,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
                     ),
                   ],
                 ],
               ),
             ),
-          Padding(
-            padding: padding ?? const EdgeInsets.all(12),
-            child: child,
-          ),
+          Padding(padding: padding ?? const EdgeInsets.all(12), child: child),
         ],
       ),
     );
   }
 }
 
-/// A hand-drawn style button with thick borders
 class HandDrawnButton extends StatefulWidget {
   final VoidCallback? onPressed;
   final Widget child;
@@ -127,7 +124,9 @@ class _HandDrawnButtonState extends State<HandDrawnButton> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           width: widget.isExpanded ? double.infinity : null,
-          padding: widget.padding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding:
+              widget.padding ??
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           decoration: BoxDecoration(
             color: _isHovered ? context.hoverColor : bgColor,
             borderRadius: BorderRadius.circular(2),
@@ -148,7 +147,9 @@ class _HandDrawnButtonState extends State<HandDrawnButton> {
                 )
               : null,
           child: DefaultTextStyle(
-            style: Theme.of(context).textTheme.bodyLarge!.copyWith(color: fgColor),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge!.copyWith(color: fgColor),
             child: IconTheme(
               data: IconThemeData(color: fgColor),
               child: widget.child,
@@ -160,7 +161,6 @@ class _HandDrawnButtonState extends State<HandDrawnButton> {
   }
 }
 
-/// A hand-drawn style checkbox
 class HandDrawnCheckbox extends StatelessWidget {
   final bool value;
   final ValueChanged<bool>? onChanged;
@@ -183,10 +183,7 @@ class HandDrawnCheckbox extends StatelessWidget {
         decoration: BoxDecoration(
           color: context.cardColor,
           borderRadius: BorderRadius.circular(2),
-          border: Border.all(
-            color: context.borderColor,
-            width: 2,
-          ),
+          border: Border.all(color: context.borderColor, width: 2),
         ),
         child: value
             ? Center(
@@ -205,7 +202,6 @@ class HandDrawnCheckbox extends StatelessWidget {
   }
 }
 
-/// A hand-drawn style text field
 class HandDrawnTextField extends StatelessWidget {
   final TextEditingController? controller;
   final String? hintText;
@@ -239,19 +235,18 @@ class HandDrawnTextField extends StatelessWidget {
       autofocus: autofocus,
       focusNode: focusNode,
       scrollPhysics: const BouncingScrollPhysics(),
-      style: const TextStyle(
-        fontFamily: 'ShortStack',
-        fontSize: 16,
-      ),
+      style: const TextStyle(fontFamily: 'ShortStack', fontSize: 16),
       decoration: InputDecoration(
         hintText: hintText,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 14,
+        ),
       ),
     );
   }
 }
 
-/// Drag handle widget
 class DragHandle extends StatelessWidget {
   final Color? color;
 
@@ -270,7 +265,6 @@ class DragHandle extends StatelessWidget {
   }
 }
 
-/// Drop indicator line
 class DropIndicator extends StatelessWidget {
   final bool isVisible;
 
@@ -296,7 +290,6 @@ class DropIndicator extends StatelessWidget {
   }
 }
 
-/// Color dot for tasks
 class ColorDot extends StatelessWidget {
   final Color color;
   final double size;
@@ -334,16 +327,11 @@ class ColorDot extends StatelessWidget {
   }
 }
 
-/// Quadrant badge
 class QuadrantBadge extends StatelessWidget {
   final String label;
   final Color color;
 
-  const QuadrantBadge({
-    super.key,
-    required this.label,
-    required this.color,
-  });
+  const QuadrantBadge({super.key, required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -355,10 +343,9 @@ class QuadrantBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Colors.white,
-              fontSize: 10,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(color: Colors.white, fontSize: 10),
       ),
     );
   }

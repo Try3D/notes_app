@@ -3,7 +3,6 @@ import '../models/task.dart';
 import '../theme/app_theme.dart';
 import 'hand_drawn_widgets.dart';
 
-/// Shows a bottom sheet for editing a task
 Future<void> showTaskEditor({
   required BuildContext context,
   required Task task,
