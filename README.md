@@ -35,14 +35,14 @@ Visit [notegrid.pages.dev](https://notegrid.pages.dev)
 
 ### Android
 
-1. Download the APK from the [Releases](https://github.com/rsarans/notegrid/releases) page
+1. Download the APK from the [Releases](https://github.com/Try3D/notegrid/releases) page
 2. Open the APK on your device
 3. If prompted, enable "Install from unknown sources" in Settings
 4. Install and open the app
 
 ### Chrome Extension
 
-1. Download the `.crx` file from the [Releases](https://github.com/rsarans/notegrid/releases) page
+1. Download the `.crx` file from the [Releases](https://github.com/Try3D/notegrid/releases) page
 2. Open `chrome://extensions` in Chrome
 3. Enable "Developer mode" (toggle in top right)
 4. Drag and drop the `.crx` file onto the page, or:
