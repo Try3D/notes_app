@@ -135,7 +135,7 @@ header {
 }
 
 header h1 {
-  font-size: 1.8em;
+  font-size: 1.5em;
   margin: 0;
 }
 
@@ -144,7 +144,7 @@ header h1 {
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-  font-size: 1.8em;
+  font-size: 1.5em;
   font-weight: bold;
   margin: 0;
 }
@@ -163,10 +163,6 @@ header h1 {
   -webkit-mask-repeat: repeat-x;
   mask-repeat: repeat-x;
   background: var(--border);
-}
-
-header .wavy-title {
-  font-size: 1em;
 }
 
 .matrix-layout {
@@ -1419,16 +1415,26 @@ body.dark .warning {
 }
 
 .loading-dots::after {
-  content: '';
+  content: "";
   animation: dots 1.2s steps(4, end) infinite;
 }
 
 @keyframes dots {
-  0% { content: ''; }
-  25% { content: '.'; }
-  50% { content: '..'; }
-  75% { content: '...'; }
-  100% { content: ''; }
+  0% {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+  100% {
+    content: "";
+  }
 }
 
 .settings-btn.danger {
