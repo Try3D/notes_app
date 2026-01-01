@@ -14,18 +14,18 @@ All your data syncs automatically across devices.
 
 ## No Account Required
 
-NoteGrid uses a unique UUID generated on registering instead of username/password. Store it somewhere safe as it is the only way to access your data:
+NoteGrid uses a unique UUID generated on registering instead of username/password. Store it somewhere safe as it is the only way to access your data
 
 ## Motivation
 
-I wanted a simple productivity app that works cross platform without the bloat of or limitations of basic todo apps
+I wanted a simple productivity app that works cross platform without the bloat or limitations of basic todo apps
 
-Most productivity apps either:
-- Are paid or sell your data to third party
+Most productivity apps are either:
+- Paid or sell your data to third party
 - Force you into their specific workflow
 - Are overcomplicated with features
 
-NoteGrid is different: it's simple, no login, works everywhere and free, no questions asked :)
+NoteGrid is different: it's simple, no login, works everywhere and completely free, no questions asked :)
 
 ## Download
 
