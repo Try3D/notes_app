@@ -117,8 +117,8 @@ class _LinksScreenState extends State<LinksScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.all(20),
-              child: Text(
-                'Links',
+              child: WavyUnderlineText(
+                text: 'Links',
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
             ),
@@ -183,6 +183,7 @@ class _LinksScreenState extends State<LinksScreen> {
           builder: (context, candidateData, rejectedData) {
             return LongPressDraggable<Link>(
               data: link,
+              delay: const Duration(milliseconds: 200),
               feedback: Material(
                 elevation: 4,
                 borderRadius: BorderRadius.circular(2),

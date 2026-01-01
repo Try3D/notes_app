@@ -22,7 +22,7 @@ class HandDrawnCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 150),
       decoration: BoxDecoration(
         color: context.cardColor,
         borderRadius: BorderRadius.circular(3),
@@ -30,19 +30,7 @@ class HandDrawnCard extends StatelessWidget {
           color: isDragOver ? AppColors.blue : context.borderColor,
           width: 3,
         ),
-        boxShadow: isDragOver
-            ? [
-                BoxShadow(
-                  color: AppColors.blue.withValues(alpha: 0.2),
-                  blurRadius: 0,
-                  spreadRadius: 3,
-                ),
-              ]
-            : null,
       ),
-      transform: isDragOver
-          ? Matrix4.diagonal3Values(1.01, 1.01, 1.0)
-          : Matrix4.identity(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -348,5 +336,89 @@ class QuadrantBadge extends StatelessWidget {
         ).textTheme.labelSmall?.copyWith(color: Colors.white, fontSize: 10),
       ),
     );
+  }
+}
+
+class WavyUnderlineText extends StatelessWidget {
+  final String text;
+  final TextStyle? style;
+  final Color? underlineColor;
+
+  const WavyUnderlineText({
+    super.key,
+    required this.text,
+    this.style,
+    this.underlineColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = style ?? Theme.of(context).textTheme.headlineMedium;
+    final lineColor = underlineColor ?? context.borderColor;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(text, style: textStyle),
+        const SizedBox(height: 4),
+        CustomPaint(
+          painter: _WavyLinePainter(color: lineColor),
+          size: Size(_measureTextWidth(text, textStyle), 6),
+        ),
+      ],
+    );
+  }
+
+  double _measureTextWidth(String text, TextStyle? style) {
+    final textPainter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    )..layout();
+    return textPainter.width;
+  }
+}
+
+class _WavyLinePainter extends CustomPainter {
+  final Color color;
+
+  _WavyLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.25
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    const waveHeight = 3.5;
+    const waveLength = 18.0;
+
+    path.moveTo(0, size.height / 2);
+
+    for (double x = 0; x < size.width; x += waveLength) {
+      path.quadraticBezierTo(
+        x + waveLength / 4,
+        size.height / 2 - waveHeight,
+        x + waveLength / 2,
+        size.height / 2,
+      );
+      path.quadraticBezierTo(
+        x + waveLength * 3 / 4,
+        size.height / 2 + waveHeight,
+        x + waveLength,
+        size.height / 2,
+      );
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _WavyLinePainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }

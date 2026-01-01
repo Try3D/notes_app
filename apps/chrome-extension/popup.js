@@ -130,21 +130,21 @@ async function registerUuid(uuid) {
   return response.json();
 }
 
-async function fetchUserData(uuid) {
-  const response = await fetch(`${API_BASE}/api/data`, {
+async function fetchLinks(uuid) {
+  const response = await fetch(`${API_BASE}/api/links`, {
     headers: { 'Authorization': `Bearer ${uuid}` },
   });
   return response.json();
 }
 
-async function saveUserData(uuid, data) {
-  const response = await fetch(`${API_BASE}/api/data`, {
-    method: 'PUT',
+async function createLink(uuid, link) {
+  const response = await fetch(`${API_BASE}/api/links`, {
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${uuid}`,
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(link),
   });
   return response.json();
 }
@@ -222,7 +222,7 @@ async function getCurrentTab() {
   return tab;
 }
 
-function createLink(url, title, favicon) {
+function makeLinkObject(url, title, favicon) {
   return {
     id: generateUUID(),
     url,
@@ -242,15 +242,16 @@ async function saveBookmark() {
   showStatus('loading', 'Saving...');
 
   try {
-    const result = await fetchUserData(state.uuid);
+    // Fetch only links using the new granular endpoint
+    const result = await fetchLinks(state.uuid);
     if (!result.success) {
-      throw new Error('Failed to fetch data');
+      throw new Error('Failed to fetch links');
     }
 
-    const userData = result.data;
+    const links = result.data || [];
     const url = state.currentTab.url;
 
-    if (linkExists(userData.links, url)) {
+    if (linkExists(links, url)) {
       showStatus('exists', 'Already bookmarked');
       setTimeout(() => window.close(), 1000);
       return;
@@ -260,11 +261,10 @@ async function saveBookmark() {
     const favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
     const title = state.currentTab.title || urlObj.hostname;
 
-    const newLink = createLink(url, title, favicon);
-    userData.links.push(newLink);
-    userData.updatedAt = Date.now();
+    const newLink = makeLinkObject(url, title, favicon);
 
-    const saveResult = await saveUserData(state.uuid, userData);
+    // Create single link using the new granular endpoint
+    const saveResult = await createLink(state.uuid, newLink);
     if (!saveResult.success) {
       throw new Error('Failed to save');
     }

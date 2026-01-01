@@ -1306,6 +1306,7 @@ body.dark .warning {
 .settings-container {
   max-width: 600px;
   margin: auto;
+  overflow-x: hidden;
 }
 
 .settings-section {
@@ -1314,6 +1315,8 @@ body.dark .warning {
   border-radius: 2px;
   padding: 24px;
   margin-bottom: 20px;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .settings-section h2 {
@@ -1381,6 +1384,8 @@ body.dark .warning {
   font-size: 1em;
   cursor: pointer;
   transition: 0.15s;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .settings-btn:hover:not(:disabled) {

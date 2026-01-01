@@ -47,7 +47,12 @@ class _MatrixScreenState extends State<MatrixScreen> {
     }
   }
 
-  void _handleTaskDrop(Task draggedTask, String targetQuadrant, {Task? targetTask, bool atEnd = false}) {
+  void _handleTaskDrop(
+    Task draggedTask,
+    String targetQuadrant, {
+    Task? targetTask,
+    bool atEnd = false,
+  }) {
     final data = context.read<DataProvider>();
     final tasks = data.tasks;
     final newQ = _stringToQuadrant(targetQuadrant);
@@ -60,8 +65,12 @@ class _MatrixScreenState extends State<MatrixScreen> {
         return t.q != newQ;
       }).toList();
 
-      final filteredQuadrantTasks = quadrantTasks.where((t) => t.id != draggedTask.id).toList();
-      final targetIndex = filteredQuadrantTasks.indexWhere((t) => t.id == targetTask.id);
+      final filteredQuadrantTasks = quadrantTasks
+          .where((t) => t.id != draggedTask.id)
+          .toList();
+      final targetIndex = filteredQuadrantTasks.indexWhere(
+        (t) => t.id == targetTask.id,
+      );
 
       if (targetIndex != -1) {
         filteredQuadrantTasks.insert(targetIndex, draggedTask);
@@ -69,7 +78,10 @@ class _MatrixScreenState extends State<MatrixScreen> {
         filteredQuadrantTasks.add(draggedTask);
       }
 
-      final newOrder = [...otherTasks, ...filteredQuadrantTasks].map((t) => t.id).toList();
+      final newOrder = [
+        ...otherTasks,
+        ...filteredQuadrantTasks,
+      ].map((t) => t.id).toList();
 
       if (draggedTask.q != newQ) {
         data.updateTask(draggedTask.id, q: newQ, clearQuadrant: newQ == null);
@@ -83,10 +95,15 @@ class _MatrixScreenState extends State<MatrixScreen> {
         return t.q != newQ;
       }).toList();
 
-      final filteredQuadrantTasks = quadrantTasks.where((t) => t.id != draggedTask.id).toList();
+      final filteredQuadrantTasks = quadrantTasks
+          .where((t) => t.id != draggedTask.id)
+          .toList();
       filteredQuadrantTasks.add(draggedTask);
 
-      final newOrder = [...otherTasks, ...filteredQuadrantTasks].map((t) => t.id).toList();
+      final newOrder = [
+        ...otherTasks,
+        ...filteredQuadrantTasks,
+      ].map((t) => t.id).toList();
 
       if (draggedTask.q != newQ) {
         data.updateTask(draggedTask.id, q: newQ, clearQuadrant: newQ == null);
@@ -142,8 +159,8 @@ class _MatrixScreenState extends State<MatrixScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.all(20),
-          child: Text(
-            'Eisenhower Matrix',
+          child: WavyUnderlineText(
+            text: 'Eisenhower Matrix',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
         ),
@@ -162,34 +179,86 @@ class _MatrixScreenState extends State<MatrixScreen> {
   }
 
   Widget _buildDesktopLayout(List<Task> tasks) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 280,
-            child: _buildQuadrantCard(
-              tasks,
-              'unassigned',
-              'Unassigned',
-              'Drag tasks here',
-              AppColors.gray,
+    const double gap = 20.0;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              width: 280,
+              child: _buildQuadrantCard(
+                tasks,
+                'unassigned',
+                'Unassigned',
+                'Drag tasks here',
+                AppColors.gray,
+              ),
             ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: 2,
-              mainAxisSpacing: 20,
-              crossAxisSpacing: 20,
-              childAspectRatio: 1.2,
-              children: _quadrants.map((q) {
-                return _buildQuadrantCard(tasks, q.$1, q.$2, q.$3, q.$4);
-              }).toList(),
+            const SizedBox(width: gap),
+            Expanded(
+              child: Column(
+                children: [
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: _buildQuadrantCard(
+                            tasks,
+                            _quadrants[0].$1,
+                            _quadrants[0].$2,
+                            _quadrants[0].$3,
+                            _quadrants[0].$4,
+                          ),
+                        ),
+                        const SizedBox(width: gap),
+                        Expanded(
+                          child: _buildQuadrantCard(
+                            tasks,
+                            _quadrants[1].$1,
+                            _quadrants[1].$2,
+                            _quadrants[1].$3,
+                            _quadrants[1].$4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: gap),
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: _buildQuadrantCard(
+                            tasks,
+                            _quadrants[2].$1,
+                            _quadrants[2].$2,
+                            _quadrants[2].$3,
+                            _quadrants[2].$4,
+                          ),
+                        ),
+                        const SizedBox(width: gap),
+                        Expanded(
+                          child: _buildQuadrantCard(
+                            tasks,
+                            _quadrants[3].$1,
+                            _quadrants[3].$2,
+                            _quadrants[3].$3,
+                            _quadrants[3].$4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -198,7 +267,13 @@ class _MatrixScreenState extends State<MatrixScreen> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       children: [
-        _buildQuadrantCard(tasks, 'unassigned', 'Unassigned', 'Drag tasks here', AppColors.gray),
+        _buildQuadrantCard(
+          tasks,
+          'unassigned',
+          'Unassigned',
+          'Drag tasks here',
+          AppColors.gray,
+        ),
         const SizedBox(height: 20),
         ..._quadrants.map((q) {
           return Padding(
@@ -282,8 +357,9 @@ class _MatrixScreenState extends State<MatrixScreen> {
             _handleTaskDrop(details.data, quadrantId, targetTask: task);
           },
           builder: (context, candidateData, rejectedData) {
-            return Draggable<Task>(
+            return LongPressDraggable<Task>(
               data: task,
+              delay: const Duration(milliseconds: 200),
               feedback: Material(
                 elevation: 4,
                 borderRadius: BorderRadius.circular(2),
@@ -350,9 +426,11 @@ class _MatrixScreenState extends State<MatrixScreen> {
               child: Text(
                 task.title.isEmpty ? 'Untitled' : task.title,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      decoration: task.completed ? TextDecoration.lineThrough : null,
-                      color: task.completed ? context.mutedColor : null,
-                    ),
+                  decoration: task.completed
+                      ? TextDecoration.lineThrough
+                      : null,
+                  color: task.completed ? context.mutedColor : null,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),

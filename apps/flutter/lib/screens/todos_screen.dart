@@ -18,8 +18,16 @@ class _TodosScreenState extends State<TodosScreen> {
   String? _dragOverColor;
 
   static const _colors = [
-    '#ef4444', '#22c55e', '#f97316', '#3b82f6', '#8b5cf6',
-    '#ec4899', '#14b8a6', '#facc15', '#64748b', '#0f172a',
+    '#ef4444',
+    '#22c55e',
+    '#f97316',
+    '#3b82f6',
+    '#8b5cf6',
+    '#ec4899',
+    '#14b8a6',
+    '#facc15',
+    '#64748b',
+    '#0f172a',
   ];
 
   static const _quadrantLabels = {
@@ -46,26 +54,32 @@ class _TodosScreenState extends State<TodosScreen> {
 
   void _handleAddTask() {
     final data = context.read<DataProvider>();
-    final newTask = data.addTask(
-      title: '',
-      note: '',
-      color: _colors.first,
-    );
+    final newTask = data.addTask(title: '', note: '', color: _colors.first);
     _openTaskEditor(newTask);
   }
 
-  void _handleTaskDrop(Task draggedTask, String targetColor, {Task? targetTask, bool atEnd = false}) {
-    if (draggedTask.color != targetColor) return; // Only reorder within same color
-    
+  void _handleTaskDrop(
+    Task draggedTask,
+    String targetColor, {
+    Task? targetTask,
+    bool atEnd = false,
+  }) {
+    if (draggedTask.color != targetColor)
+      return; // Only reorder within same color
+
     final data = context.read<DataProvider>();
     final tasks = data.tasks;
     final grouped = _groupByColor(tasks);
     final colorTasks = grouped[targetColor] ?? [];
 
     if (targetTask != null && draggedTask.id != targetTask.id) {
-      final filteredTasks = colorTasks.where((t) => t.id != draggedTask.id).toList();
-      final targetIndex = filteredTasks.indexWhere((t) => t.id == targetTask.id);
-      
+      final filteredTasks = colorTasks
+          .where((t) => t.id != draggedTask.id)
+          .toList();
+      final targetIndex = filteredTasks.indexWhere(
+        (t) => t.id == targetTask.id,
+      );
+
       if (targetIndex != -1) {
         filteredTasks.insert(targetIndex, draggedTask);
       }
@@ -81,7 +95,9 @@ class _TodosScreenState extends State<TodosScreen> {
       }
       data.reorderTasks(newTaskIds);
     } else if (atEnd) {
-      final filteredTasks = colorTasks.where((t) => t.id != draggedTask.id).toList();
+      final filteredTasks = colorTasks
+          .where((t) => t.id != draggedTask.id)
+          .toList();
       filteredTasks.add(draggedTask);
 
       final newTaskIds = <String>[];
@@ -143,8 +159,8 @@ class _TodosScreenState extends State<TodosScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.all(20),
-          child: Text(
-            'Todos',
+          child: WavyUnderlineText(
+            text: 'Todos',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
         ),
@@ -153,9 +169,9 @@ class _TodosScreenState extends State<TodosScreen> {
               ? Center(
                   child: Text(
                     'No todos yet. Add one to get started!',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: context.mutedColor,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: context.mutedColor),
                   ),
                 )
               : ListView.builder(
@@ -171,10 +187,7 @@ class _TodosScreenState extends State<TodosScreen> {
                 ),
         ),
         if (sortedColors.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: _buildAddButton(),
-          ),
+          Padding(padding: const EdgeInsets.all(20), child: _buildAddButton()),
       ],
     );
   }
@@ -207,7 +220,10 @@ class _TodosScreenState extends State<TodosScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(color: context.borderColor, width: 2),
@@ -219,9 +235,8 @@ class _TodosScreenState extends State<TodosScreen> {
                       const SizedBox(width: 10),
                       Text(
                         AppColors.colorNames[color] ?? 'Other',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -258,14 +273,18 @@ class _TodosScreenState extends State<TodosScreen> {
             _handleTaskDrop(details.data, color, targetTask: task);
           },
           builder: (context, candidateData, rejectedData) {
-            return Draggable<Task>(
+            return LongPressDraggable<Task>(
               data: task,
+              delay: const Duration(milliseconds: 200),
               feedback: Material(
                 elevation: 4,
                 borderRadius: BorderRadius.circular(2),
                 child: Container(
                   width: 300,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: context.cardColor,
                     borderRadius: BorderRadius.circular(2),
@@ -299,7 +318,8 @@ class _TodosScreenState extends State<TodosScreen> {
   }
 
   Widget _buildTaskContent(Task task) {
-    return InkWell(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () => _openTaskEditor(task),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -323,9 +343,11 @@ class _TodosScreenState extends State<TodosScreen> {
               child: Text(
                 task.title.isEmpty ? 'Untitled' : task.title,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      decoration: task.completed ? TextDecoration.lineThrough : null,
-                      color: task.completed ? context.mutedColor : null,
-                    ),
+                  decoration: task.completed
+                      ? TextDecoration.lineThrough
+                      : null,
+                  color: task.completed ? context.mutedColor : null,
+                ),
               ),
             ),
             if (task.q != null) ...[

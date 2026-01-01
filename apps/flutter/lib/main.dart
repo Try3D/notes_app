@@ -159,23 +159,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildSidebar(ThemeProvider theme) {
+    // Slightly darker in light mode, slightly lighter in dark mode
+    final hsl = HSLColor.fromColor(context.bgColor);
+    final navColor = context.isDark
+        ? hsl.withLightness((hsl.lightness + 0.05).clamp(0.0, 1.0)).toColor()
+        : hsl.withLightness((hsl.lightness - 0.03).clamp(0.0, 1.0)).toColor();
+
     return Container(
       width: 64,
-      decoration: BoxDecoration(
-        color: context.bgColor,
-        border: Border(right: BorderSide(color: context.borderColor, width: 3)),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: 14),
-          _buildNavItem(0, Icons.check_circle_outline, 'Todos'),
-          _buildNavItem(1, Icons.grid_view, 'Matrix'),
-          _buildNavItem(2, Icons.view_kanban_outlined, 'Kanban'),
-          _buildNavItem(3, Icons.link, 'Links'),
-          _buildNavItem(4, Icons.settings, 'Settings'),
-          const Spacer(),
-          const SizedBox(height: 14),
-        ],
+      decoration: BoxDecoration(color: navColor),
+      child: SafeArea(
+        right: false,
+        bottom: false,
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            _buildNavItem(0, Icons.check_circle_outline, 'Todos'),
+            _buildNavItem(1, Icons.grid_view, 'Matrix'),
+            _buildNavItem(2, Icons.view_kanban_outlined, 'Kanban'),
+            _buildNavItem(3, Icons.link, 'Links'),
+            _buildNavItem(4, Icons.settings, 'Settings'),
+            const SizedBox(height: 10),
+          ],
+        ),
       ),
     );
   }
@@ -183,8 +189,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = _selectedIndex == index;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+    return Expanded(
       child: Tooltip(
         message: label,
         child: Material(
@@ -192,21 +197,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           child: InkWell(
             onTap: () => _onTabChanged(index),
             borderRadius: BorderRadius.circular(2),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.blue : Colors.transparent,
-                borderRadius: BorderRadius.circular(2),
-                border: Border.all(
-                  color: isSelected ? context.borderColor : Colors.transparent,
-                  width: 2,
+            child: Center(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.blue : Colors.transparent,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-              ),
-              child: Icon(
-                icon,
-                color: isSelected ? Colors.white : context.borderColor,
+                child: Icon(
+                  icon,
+                  color: isSelected ? Colors.white : context.mutedColor,
+                ),
               ),
             ),
           ),
@@ -216,11 +219,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildBottomNav(ThemeProvider theme) {
+    // Slightly darker in light mode, slightly lighter in dark mode
+    final hsl = HSLColor.fromColor(context.bgColor);
+    final navColor = context.isDark
+        ? hsl.withLightness((hsl.lightness + 0.05).clamp(0.0, 1.0)).toColor()
+        : hsl.withLightness((hsl.lightness - 0.03).clamp(0.0, 1.0)).toColor();
+
     return Container(
-      decoration: BoxDecoration(
-        color: context.bgColor,
-        border: Border(top: BorderSide(color: context.borderColor, width: 3)),
-      ),
+      decoration: BoxDecoration(color: navColor),
       child: SafeArea(
         top: false,
         minimum: const EdgeInsets.only(bottom: 4),

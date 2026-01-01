@@ -136,48 +136,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Settings',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 20),
-                _buildThemeSection(theme),
-                const SizedBox(height: 20),
-                _buildSection(
-                  title: 'Your Secret Code',
-                  description:
-                      'This is your unique identifier. Keep it safe - it\'s the only way to access your data.',
-                  child: _buildUUIDDisplay(auth.uuid, maskedUUID),
-                ),
-                const SizedBox(height: 20),
-                _buildSection(
-                  title: 'Export Data',
-                  description:
-                      'Copy all your tasks and links as JSON for backup.',
-                  child: _buildExportButton(),
-                ),
-                const SizedBox(height: 20),
-                _buildSection(
-                  title: 'Import Data',
-                  description:
-                      'Restore your tasks and links from a previously exported JSON backup. Copy JSON to clipboard then tap Import.',
-                  child: _buildImportSection(),
-                ),
-                const SizedBox(height: 20),
-                _buildLogoutSection(),
-                const SizedBox(height: 20),
-                _buildDangerSection(),
-                const SizedBox(height: 30),
-                _buildFooter(),
-              ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            WavyUnderlineText(
+              text: 'Settings',
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
-          ),
+            const SizedBox(height: 20),
+            _buildThemeSection(theme),
+            const SizedBox(height: 20),
+            _buildSection(
+              title: 'Your Secret Code',
+              description:
+                  'This is your unique identifier. Keep it safe - it\'s the only way to access your data.',
+              child: _buildUUIDDisplay(auth.uuid, maskedUUID),
+            ),
+            const SizedBox(height: 20),
+            _buildSection(
+              title: 'Export Data',
+              description: 'Copy all your tasks and links as JSON for backup.',
+              child: _buildExportButton(),
+            ),
+            const SizedBox(height: 20),
+            _buildSection(
+              title: 'Import Data',
+              description:
+                  'Restore your tasks and links from a previously exported JSON backup. Copy JSON to clipboard then tap Import.',
+              child: _buildImportSection(),
+            ),
+            const SizedBox(height: 20),
+            _buildLogoutSection(),
+            const SizedBox(height: 20),
+            _buildDangerSection(),
+            const SizedBox(height: 30),
+            _buildFooter(),
+          ],
         ),
       ),
     );
@@ -365,10 +359,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: _importing ? context.mutedColor : context.textColor,
               ),
               const SizedBox(width: 10),
-              if (_importing)
-                _LoadingDots()
-              else
-                const Text('Import from Clipboard'),
+              Flexible(
+                child: _importing
+                    ? _LoadingDots()
+                    : const Text('Import from Clipboard'),
+              ),
             ],
           ),
         ),

@@ -4,7 +4,7 @@ function generateUUID() {
   return crypto.randomUUID();
 }
 
-function createLink(url, title, favicon) {
+function makeLinkObject(url, title, favicon) {
   return {
     id: generateUUID(),
     url,
@@ -26,21 +26,21 @@ async function getStoredUuid() {
   });
 }
 
-async function fetchUserData(uuid) {
-  const response = await fetch(`${API_BASE}/api/data`, {
+async function fetchLinks(uuid) {
+  const response = await fetch(`${API_BASE}/api/links`, {
     headers: { 'Authorization': `Bearer ${uuid}` },
   });
   return response.json();
 }
 
-async function saveUserData(uuid, data) {
-  const response = await fetch(`${API_BASE}/api/data`, {
-    method: 'PUT',
+async function createLink(uuid, link) {
+  const response = await fetch(`${API_BASE}/api/links`, {
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${uuid}`,
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(link),
   });
   return response.json();
 }
@@ -75,15 +75,16 @@ async function saveCurrentTab() {
       return;
     }
 
-    const result = await fetchUserData(uuid);
+    // Fetch only links using the new granular endpoint
+    const result = await fetchLinks(uuid);
     if (!result.success) {
       showBadge('!', '#dc2626');
       return;
     }
 
-    const userData = result.data;
+    const links = result.data || [];
 
-    if (linkExists(userData.links, tab.url)) {
+    if (linkExists(links, tab.url)) {
       showBadge('=', '#f59e0b');
       return;
     }
@@ -92,11 +93,10 @@ async function saveCurrentTab() {
     const favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
     const title = tab.title || urlObj.hostname;
 
-    const newLink = createLink(tab.url, title, favicon);
-    userData.links.push(newLink);
-    userData.updatedAt = Date.now();
+    const newLink = makeLinkObject(tab.url, title, favicon);
 
-    const saveResult = await saveUserData(uuid, userData);
+    // Create single link using the new granular endpoint
+    const saveResult = await createLink(uuid, newLink);
     if (saveResult.success) {
       showBadge('OK', '#22c55e');
     } else {

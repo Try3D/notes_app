@@ -19,6 +19,7 @@ class _KanbanScreenState extends State<KanbanScreen>
   late TabController _tabController;
   String? _dragOverTaskId;
   int? _dragOverTabIndex;
+  String? _dragOverColumnId; // For desktop column drag-over state
 
   // Edge scrolling state
   bool _isDragging = false;
@@ -198,6 +199,7 @@ class _KanbanScreenState extends State<KanbanScreen>
     setState(() {
       _dragOverTaskId = null;
       _dragOverTabIndex = null;
+      _dragOverColumnId = null;
     });
   }
 
@@ -278,22 +280,145 @@ class _KanbanScreenState extends State<KanbanScreen>
         children: [
           Padding(
             padding: const EdgeInsets.all(20),
-            child: Text(
-              'Kanban Board',
+            child: WavyUnderlineText(
+              text: 'Kanban Board',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
           ),
-          _buildTabBar(data.tasks),
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: _columns.map((col) {
-                return _buildColumnContent(data.tasks, col.$1, col.$2, col.$3);
-              }).toList(),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Use desktop layout if width >= 900
+                if (constraints.maxWidth >= 900) {
+                  return _buildDesktopLayout(data.tasks);
+                }
+                return _buildMobileLayout(data.tasks);
+              },
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDesktopLayout(List<Task> tasks) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: _columns.map((col) {
+        return Expanded(
+          child: _buildKanbanColumn(tasks, col.$1, col.$2, col.$3),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildKanbanColumn(
+    List<Task> allTasks,
+    KanbanColumn? column,
+    String title,
+    Color color,
+  ) {
+    final tasks = _getTasksByColumn(allTasks, column);
+    final count = tasks.length;
+    final columnId = column?.name ?? 'unassigned';
+    final isDragOver = _dragOverColumnId == columnId;
+
+    return DragTarget<Task>(
+      onWillAcceptWithDetails: (details) {
+        setState(() => _dragOverColumnId = columnId);
+        return true;
+      },
+      onLeave: (_) {
+        setState(() {
+          if (_dragOverColumnId == columnId) _dragOverColumnId = null;
+        });
+      },
+      onAcceptWithDetails: (details) {
+        _handleTaskDrop(details.data, column, atEnd: true);
+      },
+      builder: (context, candidateData, rejectedData) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          margin: const EdgeInsets.only(left: 8, right: 8, bottom: 20),
+          decoration: BoxDecoration(
+            color: context.cardColor,
+            borderRadius: BorderRadius.circular(3),
+            border: Border.all(
+              color: isDragOver ? AppColors.blue : context.borderColor,
+              width: 3,
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(0),
+                    topRight: Radius.circular(0),
+                  ),
+                ),
+                child: Text(
+                  '$title ($count)',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(color: Colors.white),
+                ),
+              ),
+              Expanded(
+                child: tasks.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No tasks',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: context.mutedColor),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(12),
+                        itemCount: tasks.length,
+                        itemBuilder: (context, index) {
+                          return _buildTaskItem(tasks[index], column);
+                        },
+                      ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: HandDrawnButton(
+                  onPressed: () => _addTask(column),
+                  isExpanded: true,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add, size: 18),
+                      SizedBox(width: 8),
+                      Text('Add Task'),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileLayout(List<Task> tasks) {
+    return Column(
+      children: [
+        _buildTabBar(tasks),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: _columns.map((col) {
+              return _buildColumnContent(tasks, col.$1, col.$2, col.$3);
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 
@@ -466,6 +591,7 @@ class _KanbanScreenState extends State<KanbanScreen>
           builder: (context, candidateData, rejectedData) {
             return LongPressDraggable<Task>(
               data: task,
+              delay: const Duration(milliseconds: 200),
               onDragStarted: _onDragStarted,
               onDragEnd: (_) => _onDragEnded(),
               feedback: Material(
