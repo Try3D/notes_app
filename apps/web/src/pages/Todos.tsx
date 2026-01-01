@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { tasksAtom, addTaskAtom, updateTaskAtom, deleteTaskAtom, moveTaskAtom, loadingAtom } from "../store";
 import TaskDrawer from "../components/TaskDrawer";
+import WavyTitle from "../components/WavyTitle";
 import type { Task } from "@eisenhower/shared";
 
 const COLORS = [
@@ -138,7 +139,7 @@ export default function Todos() {
     return (
       <>
         <header>
-          <h1>Todos</h1>
+          <WavyTitle>Todos</WavyTitle>
         </header>
         <div className="empty-state">Loading...</div>
       </>
@@ -148,7 +149,7 @@ export default function Todos() {
   return (
     <>
       <header>
-        <h1>Todos</h1>
+        <WavyTitle>Todos</WavyTitle>
       </header>
 
       <div className="todo-container">

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { tasksAtom, updateTaskAtom, deleteTaskAtom, moveTaskAtom, loadingAtom } from '../store'
 import TaskDrawer from '../components/TaskDrawer'
+import WavyTitle from '../components/WavyTitle'
 import type { Task } from '@eisenhower/shared'
 
 type Quadrant = 'do' | 'decide' | 'delegate' | 'delete' | null
@@ -131,7 +132,7 @@ export default function Matrix() {
   if (loading) {
     return (
       <>
-        <header><h1>Eisenhower Matrix</h1></header>
+        <header><WavyTitle>Eisenhower Matrix</WavyTitle></header>
         <div className="empty-state">Loading...</div>
       </>
     )
@@ -141,7 +142,7 @@ export default function Matrix() {
 
   return (
     <>
-      <header><h1>Eisenhower Matrix</h1></header>
+      <header><WavyTitle>Eisenhower Matrix</WavyTitle></header>
 
       <div className="matrix-layout">
         <div className="unassigned-column">

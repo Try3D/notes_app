@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAtomValue, useSetAtom } from "jotai";
 import { uuidAtom, tasksAtom, linksAtom, logoutAtom, importDataAtom, deleteAccountAtom } from "../store";
 import { useTheme } from "../context/ThemeContext";
+import WavyTitle from "../components/WavyTitle";
 
 export default function Settings() {
   const uuid = useAtomValue(uuidAtom);
@@ -118,7 +119,7 @@ export default function Settings() {
   return (
     <>
       <header>
-        <h1>Settings</h1>
+        <WavyTitle>Settings</WavyTitle>
       </header>
 
       <div className="settings-container">

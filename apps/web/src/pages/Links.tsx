@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { linksAtom, addLinkAtom, deleteLinkAtom, reorderLinksAtom, loadingAtom } from "../store";
+import WavyTitle from "../components/WavyTitle";
 import type { Link } from "@eisenhower/shared";
 
 export default function Links() {
@@ -100,7 +101,7 @@ export default function Links() {
     return (
       <>
         <header>
-          <h1>Links</h1>
+          <WavyTitle>Links</WavyTitle>
         </header>
         <div className="empty-state">Loading...</div>
       </>
@@ -110,7 +111,7 @@ export default function Links() {
   return (
     <>
       <header>
-        <h1>Links</h1>
+        <WavyTitle>Links</WavyTitle>
       </header>
 
       <div className="links-container">

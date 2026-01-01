@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { tasksAtom, addTaskAtom, updateTaskAtom, deleteTaskAtom, moveTaskAtom, loadingAtom } from "../store";
 import TaskDrawer from "../components/TaskDrawer";
+import WavyTitle from "../components/WavyTitle";
 import type { Task } from "@eisenhower/shared";
 
 type KanbanColumn = "backlog" | "todo" | "in-progress" | "done";
@@ -159,7 +160,7 @@ export default function Kanban() {
     return (
       <>
         <header>
-          <h1>Kanban Board</h1>
+          <WavyTitle>Kanban Board</WavyTitle>
         </header>
         <div className="empty-state">Loading...</div>
       </>
@@ -171,7 +172,7 @@ export default function Kanban() {
   return (
     <>
       <header>
-        <h1>Kanban Board</h1>
+        <WavyTitle>Kanban Board</WavyTitle>
       </header>
 
       <div className="kanban-container">

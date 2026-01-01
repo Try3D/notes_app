@@ -135,8 +135,38 @@ header {
 }
 
 header h1 {
-  font-size: 1.5em;
+  font-size: 1.8em;
   margin: 0;
+}
+
+.wavy-title {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 1.8em;
+  font-weight: bold;
+  margin: 0;
+}
+
+.wavy-title span {
+  display: inline-block;
+}
+
+.wavy-underline {
+  height: 8px;
+  width: 100%;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 8' preserveAspectRatio='none'%3E%3Cpath d='M0 4 Q4.5 0 9 4 T18 4 T27 4 T36 4' fill='none' stroke='black' stroke-width='2.25' stroke-linecap='round'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 8' preserveAspectRatio='none'%3E%3Cpath d='M0 4 Q4.5 0 9 4 T18 4 T27 4 T36 4' fill='none' stroke='black' stroke-width='2.25' stroke-linecap='round'/%3E%3C/svg%3E");
+  -webkit-mask-size: 36px 8px;
+  mask-size: 36px 8px;
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  background: var(--border);
+}
+
+header .wavy-title {
+  font-size: 1em;
 }
 
 .matrix-layout {
