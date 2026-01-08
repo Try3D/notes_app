@@ -24,16 +24,18 @@ export default function Links() {
     setSaving(true);
 
     try {
+      let normalizedUrl = url;
       let title = url;
       let favicon = "";
 
       try {
         const urlObj = new URL(url.startsWith("http") ? url : `https://${url}`);
+        normalizedUrl = urlObj.toString();
         favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=64`;
         title = urlObj.hostname;
       } catch {}
 
-      addLink({ url, title, favicon });
+      addLink({ url: normalizedUrl, title, favicon });
       setUrlInput("");
       setShowModal(false);
     } finally {
@@ -137,7 +139,7 @@ export default function Links() {
                   <img src={link.favicon} alt="" className="link-favicon" />
                 )}
                 <a
-                  href={link.url}
+                  href={link.url.startsWith("http") ? link.url : `https://${link.url}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="link-info"
